@@ -1,9 +1,6 @@
 -- TaskFlow Database Setup
 -- Execute this script in your Supabase SQL Editor
 
--- Enable RLS (Row Level Security)
-ALTER TABLE IF EXISTS auth.users ENABLE ROW LEVEL SECURITY;
-
 -- Create categories table
 CREATE TABLE IF NOT EXISTS categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
