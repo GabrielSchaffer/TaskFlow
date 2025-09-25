@@ -86,7 +86,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
       <Box sx={{ p: 1 }}>
         <Box
           component="img"
-          src="/newlogo.webp"
+          src="/logonova.webp"
           alt="TaskFlow"
           sx={{
             width: '80%',

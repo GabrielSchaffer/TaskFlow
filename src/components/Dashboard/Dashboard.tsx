@@ -86,9 +86,9 @@ export const Dashboard = () => {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" elevation={1}>
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          {/* <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             TaskFlow
-          </Typography>
+          </Typography> */}
 
           <ToggleButtonGroup
             value={viewMode}
