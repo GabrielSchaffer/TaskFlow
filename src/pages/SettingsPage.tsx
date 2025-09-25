@@ -11,9 +11,7 @@ import {
   MenuItem,
   Button,
   Paper,
-  Chip,
   Avatar,
-  Divider,
   Alert,
   CircularProgress,
 } from '@mui/material';
@@ -23,7 +21,6 @@ import {
   Settings,
   CheckCircle,
   Gradient,
-  ColorLens,
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
@@ -31,8 +28,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   colorThemes,
-  getColorTheme,
-  ColorTheme,
 } from '../constants/colorThemes';
 
 export const SettingsPage = () => {
