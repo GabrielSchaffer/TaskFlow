@@ -38,6 +38,9 @@ import { useTasks } from '../../hooks/useTasks';
 import { useAuth } from '../../hooks/useAuth';
 import { TaskForm } from '../Tasks/TaskForm';
 import { TaskPreview } from '../Tasks/TaskPreview';
+import { Confetti } from '../Animations/Confetti';
+import { Fireworks } from '../Animations/Fireworks';
+import { useCelebration } from '../../hooks/useCelebration';
 import dayjs from 'dayjs';
 
 const priorityColors = {
@@ -66,6 +69,14 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [filteredStage, setFilteredStage] = useState<string | null>(null);
+
+  const {
+    showConfetti,
+    showFireworks,
+    triggerCelebration,
+    handleConfettiComplete,
+    handleFireworksComplete
+  } = useCelebration();
 
   // Contar tarefas por etapa
   const todoTasks = tasks.filter((task: Task) => task.status === 'todo');
@@ -133,6 +144,8 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
 
   const handleCompleteTask = async (task: Task) => {
     await updateTask(task.id, { status: 'completed' });
+    // Trigger celebration when completing a task
+    triggerCelebration();
   };
 
   const formatDate = (dateString: string) => {
@@ -709,6 +722,16 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
           onEdit={handleEditFromPreview}
         />
       )}
+
+      {/* Celebration Animations */}
+      <Confetti
+        trigger={showConfetti}
+        onComplete={handleConfettiComplete}
+      />
+      <Fireworks
+        trigger={showFireworks}
+        onComplete={handleFireworksComplete}
+      />
     </Box>
   );
 };

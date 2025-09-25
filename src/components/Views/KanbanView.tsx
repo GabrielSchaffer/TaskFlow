@@ -31,6 +31,9 @@ import { Task, TaskStatus } from '../../types';
 import { useTasks } from '../../hooks/useTasks';
 import { TaskForm } from '../Tasks/TaskForm';
 import { TaskPreview } from '../Tasks/TaskPreview';
+import { Confetti } from '../Animations/Confetti';
+import { Fireworks } from '../Animations/Fireworks';
+import { useCelebration } from '../../hooks/useCelebration';
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -69,6 +72,14 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
 
+  const {
+    showConfetti,
+    showFireworks,
+    triggerCelebration,
+    handleConfettiComplete,
+    handleFireworksComplete,
+  } = useCelebration();
+
   // Sincronizar estado local com tasks
   useEffect(() => {
     setLocalTasks(tasks);
@@ -90,6 +101,11 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
     const task = localTasks.find(t => t.id === draggableId);
 
     if (task && task.status !== newStatus) {
+      // Trigger celebration when completing a task
+      if (newStatus === 'completed') {
+        triggerCelebration();
+      }
+
       // Atualização otimista - atualizar UI imediatamente
       setLocalTasks(prevTasks =>
         prevTasks.map(t =>
@@ -154,6 +170,8 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
         newStatus = 'in_progress';
       } else if (selectedTask.status === 'in_progress') {
         newStatus = 'completed';
+        // Trigger celebration when completing a task
+        triggerCelebration();
       } else {
         return;
       }
@@ -631,6 +649,10 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
           onEdit={handleEditFromPreview}
         />
       )}
+
+      {/* Celebration Animations */}
+      <Confetti trigger={showConfetti} onComplete={handleConfettiComplete} />
+      <Fireworks trigger={showFireworks} onComplete={handleFireworksComplete} />
     </>
   );
 };

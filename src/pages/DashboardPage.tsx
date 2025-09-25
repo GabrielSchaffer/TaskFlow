@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Grid,
-  Card,
-  CardContent,
   Typography,
-  Alert,
   CircularProgress,
-  Chip,
-  IconButton,
+  LinearProgress,
 } from '@mui/material';
-import { Pause, PlayArrow, CheckCircle, Close } from '@mui/icons-material';
+import { TrendingUp } from '@mui/icons-material';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '../hooks/useAuth';
 import { Task } from '../types';
@@ -18,33 +14,31 @@ import { Task } from '../types';
 export const DashboardPage = () => {
   const { user } = useAuth();
   const { tasks, loading } = useTasks(user?.id || '');
-  const [filteredStage, setFilteredStage] = useState<string | null>(null);
 
   // Contar tarefas por etapa
-  const todoTasks = tasks.filter((task: Task) => task.status === 'todo');
-  const inProgressTasks = tasks.filter(
-    (task: Task) => task.status === 'in_progress'
-  );
   const completedTasks = tasks.filter(
     (task: Task) => task.status === 'completed'
   );
 
-  // Tarefas filtradas por etapa
-  const filteredTasks = filteredStage
-    ? tasks.filter((task: Task) => task.status === filteredStage)
-    : tasks;
+  // Estatísticas gerais
+  const totalTasks = tasks.length;
+  const completionPercentage =
+    totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
 
-  const handleStageClick = (stage: string) => {
-    if (filteredStage === stage) {
-      setFilteredStage(null); // Remove filtro se clicar na mesma etapa
-    } else {
-      setFilteredStage(stage); // Aplica filtro
-    }
-  };
+  // Tarefas por prioridade
+  const highPriorityTasks = tasks.filter(
+    (task: Task) => task.priority === 'Alta'
+  );
 
-  const clearFilter = () => {
-    setFilteredStage(null);
-  };
+  // Tarefas importantes
+  const importantTasks = tasks.filter((task: Task) => task.important);
+
+  // Tarefas vencidas
+  const overdueTasks = tasks.filter((task: Task) => {
+    const today = new Date();
+    const dueDate = new Date(task.due_date);
+    return dueDate < today && task.status !== 'completed';
+  });
 
   if (loading) {
     return (
@@ -60,348 +54,503 @@ export const DashboardPage = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Visão geral das suas tarefas e produtividade
-      </Typography>
-
-      {/* Alertas para tarefas urgentes */}
-      {tasks.filter(
-        (task: Task) => task.priority === 'Alta' && task.status !== 'completed'
-      ).length > 0 && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          Você tem{' '}
-          {
-            tasks.filter(
-              (task: Task) =>
-                task.priority === 'Alta' && task.status !== 'completed'
-            ).length
-          }{' '}
-          tarefa(s) urgente(s) pendente(s)!
-        </Alert>
-      )}
-
-      {/* Cards de Etapas */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={4}>
-          <Card
-            sx={{
-              cursor: 'pointer',
-              backgroundColor: filteredStage === 'todo' ? '#2a2a2a' : '#1e1e1e',
-              border:
-                filteredStage === 'todo'
-                  ? '2px solid #f44336'
-                  : '1px solid #333',
-              '&:hover': {
-                backgroundColor: '#2a2a2a',
-                transform: 'translateY(-2px)',
-                transition: 'all 0.2s ease-in-out',
-              },
-            }}
-            onClick={() => handleStageClick('todo')}
-          >
-            <CardContent>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Pause sx={{ color: '#f44336', fontSize: '1.5rem' }} />
-                  <Typography
-                    variant="h6"
-                    sx={{ color: 'white', fontWeight: 600 }}
-                  >
-                    A Fazer
-                  </Typography>
-                </Box>
-                <Chip
-                  label={todoTasks.length}
-                  size="small"
-                  sx={{
-                    backgroundColor: '#f44336',
-                    color: 'white',
-                    fontWeight: 'bold',
-                  }}
-                />
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Tarefas pendentes
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card
-            sx={{
-              cursor: 'pointer',
-              backgroundColor:
-                filteredStage === 'in_progress' ? '#2a2a2a' : '#1e1e1e',
-              border:
-                filteredStage === 'in_progress'
-                  ? '2px solid #ff9800'
-                  : '1px solid #333',
-              '&:hover': {
-                backgroundColor: '#2a2a2a',
-                transform: 'translateY(-2px)',
-                transition: 'all 0.2s ease-in-out',
-              },
-            }}
-            onClick={() => handleStageClick('in_progress')}
-          >
-            <CardContent>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PlayArrow sx={{ color: '#ff9800', fontSize: '1.5rem' }} />
-                  <Typography
-                    variant="h6"
-                    sx={{ color: 'white', fontWeight: 600 }}
-                  >
-                    Em Andamento
-                  </Typography>
-                </Box>
-                <Chip
-                  label={inProgressTasks.length}
-                  size="small"
-                  sx={{
-                    backgroundColor: '#ff9800',
-                    color: 'white',
-                    fontWeight: 'bold',
-                  }}
-                />
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Tarefas em execução
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card
-            sx={{
-              cursor: 'pointer',
-              backgroundColor:
-                filteredStage === 'completed' ? '#2a2a2a' : '#1e1e1e',
-              border:
-                filteredStage === 'completed'
-                  ? '2px solid #4caf50'
-                  : '1px solid #333',
-              '&:hover': {
-                backgroundColor: '#2a2a2a',
-                transform: 'translateY(-2px)',
-                transition: 'all 0.2s ease-in-out',
-              },
-            }}
-            onClick={() => handleStageClick('completed')}
-          >
-            <CardContent>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CheckCircle sx={{ color: '#4caf50', fontSize: '1.5rem' }} />
-                  <Typography
-                    variant="h6"
-                    sx={{ color: 'white', fontWeight: 600 }}
-                  >
-                    Concluídas
-                  </Typography>
-                </Box>
-                <Chip
-                  label={completedTasks.length}
-                  size="small"
-                  sx={{
-                    backgroundColor: '#4caf50',
-                    color: 'white',
-                    fontWeight: 'bold',
-                  }}
-                />
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Tarefas finalizadas
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Indicador de Filtro Ativo */}
-      {filteredStage && (
-        <Box sx={{ mb: 3 }}>
-          <Alert
-            severity="info"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={clearFilter}
-              >
-                <Close fontSize="inherit" />
-              </IconButton>
-            }
-            sx={{
-              backgroundColor: '#1e3a8a',
-              color: 'white',
-              '& .MuiAlert-icon': {
-                color: 'white',
-              },
-            }}
-          >
-            Mostrando apenas tarefas da etapa:{' '}
-            <Box component="strong">
-              {filteredStage === 'todo'
-                ? 'A Fazer'
-                : filteredStage === 'in_progress'
-                ? 'Em Andamento'
-                : 'Concluídas'}
-            </Box>
-          </Alert>
-        </Box>
-      )}
-
-      {/* Lista de Tarefas Filtradas */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, color: 'white' }}>
-          {filteredStage
-            ? `Tarefas - ${
-                filteredStage === 'todo'
-                  ? 'A Fazer'
-                  : filteredStage === 'in_progress'
-                  ? 'Em Andamento'
-                  : 'Concluídas'
-              }`
-            : 'Todas as Tarefas'}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background:
+          'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)',
+        p: 4,
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%)',
+          pointerEvents: 'none',
+        },
+      }}
+    >
+      {/* Header Section */}
+      <Box sx={{ mb: 6, position: 'relative', zIndex: 1 }}>
+        <Typography
+          variant="h3"
+          sx={{
+            color: 'white',
+            fontWeight: 800,
+            mb: 2,
+            background: 'linear-gradient(45deg, #667eea, #764ba2)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          Dashboard
+        </Typography>
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontWeight: 400,
+            mb: 4,
+          }}
+        >
+          Visão geral das suas tarefas e produtividade
         </Typography>
 
-        {filteredTasks.length === 0 ? (
-          <Alert
-            severity="info"
-            sx={{ backgroundColor: '#1e1e1e', color: '#b0b0b0' }}
+        {/* Alertas elegantes */}
+        {highPriorityTasks.filter(task => task.status !== 'completed').length >
+          0 && (
+          <Box
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%)',
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              borderRadius: 3,
+              p: 3,
+              mb: 3,
+              backdropFilter: 'blur(10px)',
+            }}
           >
-            {filteredStage
-              ? `Nenhuma tarefa encontrada na etapa selecionada.`
-              : 'Nenhuma tarefa encontrada.'}
-          </Alert>
-        ) : (
-          <Grid container spacing={2}>
-            {filteredTasks.map((task: Task) => (
-              <Grid item xs={12} sm={6} md={4} key={task.id}>
-                <Card
-                  sx={{
-                    backgroundColor: '#2a2a2a',
-                    border: '1px solid #333',
-                    '&:hover': {
-                      backgroundColor: '#333',
-                    },
-                  }}
-                >
-                  <CardContent>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        mb: 1,
-                      }}
-                    >
-                      <Typography variant="h6" sx={{ color: 'white', flex: 1 }}>
-                        {task.title}
-                      </Typography>
-                      <Chip
-                        label={
-                          task.status === 'todo'
-                            ? 'A Fazer'
-                            : task.status === 'in_progress'
-                            ? 'Em Andamento'
-                            : 'Concluída'
-                        }
-                        size="small"
-                        sx={{
-                          backgroundColor:
-                            task.status === 'todo'
-                              ? '#f44336'
-                              : task.status === 'in_progress'
-                              ? '#ff9800'
-                              : '#4caf50',
-                          color: 'white',
-                          fontWeight: 'bold',
-                        }}
-                      />
-                    </Box>
+            <Typography sx={{ color: '#ffc107', fontWeight: 600 }}>
+              ⚠️ Você tem{' '}
+              {
+                highPriorityTasks.filter(task => task.status !== 'completed')
+                  .length
+              }{' '}
+              tarefa(s) de alta prioridade pendente(s)!
+            </Typography>
+          </Box>
+        )}
 
-                    {task.description && (
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: '#b0b0b0',
-                          mb: 2,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {task.description.length > 100
-                          ? `${task.description.substring(0, 100)}...`
-                          : task.description}
-                      </Typography>
-                    )}
-
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Chip
-                        label={task.priority}
-                        size="small"
-                        sx={{
-                          backgroundColor:
-                            task.priority === 'Alta'
-                              ? '#f44336'
-                              : task.priority === 'Média'
-                              ? '#ff9800'
-                              : '#2196f3',
-                          color: 'white',
-                        }}
-                      />
-
-                      {task.category && (
-                        <Chip
-                          label={task.category}
-                          size="small"
-                          variant="outlined"
-                          sx={{
-                            color: '#b0b0b0',
-                            borderColor: '#555',
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+        {overdueTasks.length > 0 && (
+          <Box
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)',
+              border: '1px solid rgba(244, 67, 54, 0.3)',
+              borderRadius: 3,
+              p: 3,
+              mb: 3,
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <Typography sx={{ color: '#f44336', fontWeight: 600 }}>
+              🚨 Você tem {overdueTasks.length} tarefa(s) vencida(s)!
+            </Typography>
+          </Box>
         )}
       </Box>
+
+      {/* Progresso Principal - Design Elegante */}
+      <Box
+        sx={{
+          mb: 4,
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <Box
+          sx={{
+            background:
+              'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 4,
+            p: 5,
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '2px',
+              background: 'linear-gradient(90deg, #667eea, #764ba2, #f093fb)',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 4,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                mr: 2,
+                boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+              }}
+            >
+              <TrendingUp sx={{ color: 'white', fontSize: '2.5rem' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="h5"
+                sx={{
+                  color: 'white',
+                  fontWeight: 700,
+                  mb: 0,
+                  background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Progresso Geral
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '1.1rem',
+                }}
+              >
+                Acompanhe seu progresso nas tarefas
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 1,
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontWeight: 500,
+                }}
+              >
+                Tarefas Concluídas
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{
+                  color: 'white',
+                  fontWeight: 700,
+                  background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {completedTasks.length} de {totalTasks}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 0 }}>
+              <LinearProgress
+                variant="determinate"
+                value={completionPercentage}
+                sx={{
+                  height: 20,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  mb: 1,
+                  '& .MuiLinearProgress-bar': {
+                    background:
+                      'linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                    borderRadius: 10,
+                    boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+                  },
+                }}
+              />
+            </Box>
+
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography
+                variant="h1"
+                sx={{
+                  fontWeight: 900,
+                  background:
+                    'linear-gradient(45deg, #667eea, #764ba2, #f093fb)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 0,
+                  fontSize: { xs: '3rem', md: '4rem' },
+                  textShadow: '0 0 30px rgba(102, 126, 234, 0.3)',
+                }}
+              >
+                {completionPercentage}%
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontWeight: 400,
+                }}
+              >
+                de conclusão
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Cards de Estatísticas - Design Moderno */}
+      <Grid
+        container
+        spacing={4}
+        sx={{ mb: 4, position: 'relative', zIndex: 1 }}
+      >
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)',
+              border: '1px solid rgba(244, 67, 54, 0.2)',
+              borderRadius: 4,
+              p: 4,
+              textAlign: 'center',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 15px 35px rgba(244, 67, 54, 0.2)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 25px 50px rgba(244, 67, 54, 0.3)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                p: 3,
+                borderRadius: 4,
+                background: 'linear-gradient(135deg, #f44336 0%, #e57373 100%)',
+                mb: 3,
+                display: 'inline-block',
+                boxShadow: '0 10px 30px rgba(244, 67, 54, 0.4)',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  color: 'white',
+                  fontWeight: 900,
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                }}
+              >
+                {highPriorityTasks.length}
+              </Typography>
+            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'white',
+                fontWeight: 700,
+                mb: 2,
+                fontSize: '1.2rem',
+              }}
+            >
+              Alta Prioridade
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '1rem',
+              }}
+            >
+              Tarefas urgentes
+            </Typography>
+          </Box>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%)',
+              border: '1px solid rgba(255, 152, 0, 0.2)',
+              borderRadius: 4,
+              p: 4,
+              textAlign: 'center',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 15px 35px rgba(255, 152, 0, 0.2)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 25px 50px rgba(255, 152, 0, 0.3)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                p: 3,
+                borderRadius: 4,
+                background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
+                mb: 3,
+                display: 'inline-block',
+                boxShadow: '0 10px 30px rgba(255, 152, 0, 0.4)',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  color: 'white',
+                  fontWeight: 900,
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                }}
+              >
+                {importantTasks.length}
+              </Typography>
+            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'white',
+                fontWeight: 700,
+                mb: 2,
+                fontSize: '1.2rem',
+              }}
+            >
+              Importantes
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '1rem',
+              }}
+            >
+              Tarefas marcadas
+            </Typography>
+          </Box>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(255, 87, 34, 0.1) 0%, rgba(255, 87, 34, 0.05) 100%)',
+              border: '1px solid rgba(255, 87, 34, 0.2)',
+              borderRadius: 4,
+              p: 4,
+              textAlign: 'center',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 15px 35px rgba(255, 87, 34, 0.2)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 25px 50px rgba(255, 87, 34, 0.3)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                p: 3,
+                borderRadius: 4,
+                background: 'linear-gradient(135deg, #ff5722 0%, #ff8a65 100%)',
+                mb: 3,
+                display: 'inline-block',
+                boxShadow: '0 10px 30px rgba(255, 87, 34, 0.4)',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  color: 'white',
+                  fontWeight: 900,
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                }}
+              >
+                {overdueTasks.length}
+              </Typography>
+            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'white',
+                fontWeight: 700,
+                mb: 2,
+                fontSize: '1.2rem',
+              }}
+            >
+              Vencidas
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '1rem',
+              }}
+            >
+              Tarefas atrasadas
+            </Typography>
+          </Box>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%)',
+              border: '1px solid rgba(33, 150, 243, 0.2)',
+              borderRadius: 4,
+              p: 4,
+              textAlign: 'center',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 15px 35px rgba(33, 150, 243, 0.2)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 25px 50px rgba(33, 150, 243, 0.3)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                p: 3,
+                borderRadius: 4,
+                background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
+                mb: 3,
+                display: 'inline-block',
+                boxShadow: '0 10px 30px rgba(33, 150, 243, 0.4)',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  color: 'white',
+                  fontWeight: 900,
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                }}
+              >
+                {totalTasks}
+              </Typography>
+            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'white',
+                fontWeight: 700,
+                mb: 2,
+                fontSize: '1.2rem',
+              }}
+            >
+              Total
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '1rem',
+              }}
+            >
+              Todas as tarefas
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
     </Box>
   );
 };
