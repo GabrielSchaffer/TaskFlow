@@ -250,7 +250,7 @@ export const TaskForm = ({
             </Grid>
 
             {/* Descrição */}
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{ height: '' }}>
               <RichTextEditor
                 value={formData.description}
                 onChange={(value: string) =>
@@ -576,6 +576,7 @@ export const TaskForm = ({
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white',
             textAlign: 'center',
+            mt: 2,
           }}
         >
           Nova Categoria
