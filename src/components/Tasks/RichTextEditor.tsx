@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Box, Typography, IconButton, Divider } from '@mui/material';
 import {
   FormatBold,
@@ -31,19 +31,43 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   helperText,
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const executeCommand = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    if (editorRef.current) {
+  const executeCommand = useCallback(
+    (command: string, value?: string) => {
+      if (editorRef.current) {
+        document.execCommand(command, false, value);
+        // Pequeno delay para garantir que o comando foi executado
+        setTimeout(() => {
+          if (editorRef.current && !isUpdating) {
+            onChange(editorRef.current.innerHTML);
+          }
+        }, 10);
+      }
+    },
+    [onChange, isUpdating]
+  );
+
+  const handleInput = useCallback(() => {
+    if (editorRef.current && !isUpdating) {
       onChange(editorRef.current.innerHTML);
     }
-  };
+  }, [onChange, isUpdating]);
 
-  const handleInput = () => {
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+  // Sincronizar conteúdo apenas quando necessário
+  useEffect(() => {
+    if (editorRef.current && !isUpdating) {
+      const currentContent = editorRef.current.innerHTML;
+      if (currentContent !== value) {
+        setIsUpdating(true);
+        editorRef.current.innerHTML = value || '';
+        // Pequeno delay para permitir que o DOM seja atualizado
+        setTimeout(() => {
+          setIsUpdating(false);
+        }, 10);
+      }
     }
-  };
+  }, [value, isUpdating]);
 
   const toolbarButtons = [
     { icon: <FormatBold />, command: 'bold', title: 'Negrito' },
@@ -145,18 +169,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         ref={editorRef}
         contentEditable
         onInput={handleInput}
-        dangerouslySetInnerHTML={{ __html: value }}
+        suppressContentEditableWarning={true}
         sx={{
           border: error ? '1px solid #d32f2f' : '1px solid #c4c4c4',
           borderTop: 'none',
           borderRadius: '0 0 8px 8px',
-          minHeight: '25aqui 0px',
+          minHeight: '220px',
           padding: '12px',
           fontSize: '14px',
           fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
           outline: 'none',
           backgroundColor: '#424242',
           color: '#ffffff',
+          textAlign: 'left',
+          lineHeight: '1.5',
           '&:focus': {
             borderColor: '#1976d2',
             boxShadow: '0 0 0 1px #1976d2',
