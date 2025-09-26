@@ -2,7 +2,16 @@
 
 Sistema completo de gerenciamento de tarefas diárias com interface moderna e funcionalidades avançadas.
 
-## 🚀 Funcionalidades
+## 🆕 Novidades e Melhorias
+
+### ✨ Últimas Atualizações
+
+- **✅ Checkbox de Concluído no Kanban**: Agora você pode marcar tarefas como concluídas diretamente no Kanban com um clique no checkbox
+- **🔧 Editor de Descrição Melhorado**: Corrigido problema do cursor que voltava para o início durante a digitação
+- **🎉 Animações de Celebração**: Confetti e fogos de artifício quando você completa uma tarefa
+- **⚡ Atualizações Otimistas**: Interface responde instantaneamente às suas ações
+
+### 🚀 Funcionalidades
 
 ### ✨ Principais Recursos
 

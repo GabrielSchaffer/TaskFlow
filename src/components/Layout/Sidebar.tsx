@@ -36,6 +36,7 @@ import {
   Speed,
   Palette,
   Campaign,
+  Edit,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -78,7 +79,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
   const [showNewsModal, setShowNewsModal] = useState(false);
 
   // Número de novidades (pode ser controlado por localStorage ou API)
-  const totalNewsCount = 6;
+  const totalNewsCount = 8;
 
   // Verificar se as novidades foram lidas
   const [newsRead, setNewsRead] = useState(() => {
@@ -422,7 +423,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                         variant="caption"
                         sx={{ color: '#888', fontSize: '0.75rem' }}
                       >
-                        📅 15 de Janeiro, 2025
+                        📅 25 de Setembro, 2025
                       </Typography>
                     </Box>
                   </Box>
@@ -476,7 +477,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                         variant="caption"
                         sx={{ color: '#888', fontSize: '0.75rem' }}
                       >
-                        📅 14 de Janeiro, 2025
+                        📅 26 de Setembro, 2025
                       </Typography>
                     </Box>
                   </Box>
@@ -530,7 +531,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                         variant="caption"
                         sx={{ color: '#888', fontSize: '0.75rem' }}
                       >
-                        📅 13 de Janeiro, 2025
+                        📅 24 de Setembro, 2025
                       </Typography>
                     </Box>
                   </Box>
@@ -553,7 +554,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
               </CardContent>
             </Card>
 
-            {/* Novidade 4: Checkbox para Concluir Tarefas */}
+            {/* Novidade 4: Checkbox no Kanban */}
             <Card sx={{ backgroundColor: '#2a2a2a', border: '1px solid #333' }}>
               <CardContent>
                 <Box
@@ -565,7 +566,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                       variant="h6"
                       sx={{ fontWeight: 'bold', color: 'white' }}
                     >
-                      Marcação Rápida de Tarefas
+                      Checkbox de Concluído no Kanban
                     </Typography>
                     <Box
                       sx={{
@@ -576,7 +577,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                       }}
                     >
                       <Chip
-                        label="Produtividade"
+                        label="Nova Funcionalidade"
                         size="small"
                         sx={{ backgroundColor: '#4caf50', color: 'white' }}
                       />
@@ -584,30 +585,89 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                         variant="caption"
                         sx={{ color: '#888', fontSize: '0.75rem' }}
                       >
-                        📅 12 de Janeiro, 2025
+                        📅 19 de Dezembro, 2024
                       </Typography>
                     </Box>
                   </Box>
                 </Box>
                 <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 2 }}>
-                  Agora você pode marcar tarefas como concluídas de forma mais
-                  rápida:
+                  Agora você pode marcar tarefas como concluídas diretamente no
+                  Kanban com um simples clique no checkbox:
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                    • Checkbox no canto superior direito
+                    • ✅ Checkbox visual no canto superior direito de cada
+                    tarefa
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                    • Botão "Marcar como Concluída" no card
+                    • 🎉 Animações de celebração ao completar tarefas
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
-                    • Auto-movimentação para coluna de concluídas
+                    • ⚡ Atualização instantânea da interface
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                    • 🎨 Título riscado e opacidade reduzida para tarefas
+                    concluídas
                   </Typography>
                 </Box>
               </CardContent>
             </Card>
 
-            {/* Novidade 5: Sistema de Notificações */}
+            {/* Novidade 5: Editor de Descrição Melhorado */}
+            <Card sx={{ backgroundColor: '#2a2a2a', border: '1px solid #333' }}>
+              <CardContent>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
+                >
+                  <Edit sx={{ color: '#2196f3', fontSize: '2rem' }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 'bold', color: 'white' }}
+                    >
+                      Editor de Descrição Corrigido
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mt: 0.5,
+                      }}
+                    >
+                      <Chip
+                        label="Correção de Bug"
+                        size="small"
+                        sx={{ backgroundColor: '#2196f3', color: 'white' }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{ color: '#888', fontSize: '0.75rem' }}
+                      >
+                        📅 19 de Dezembro, 2024
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 2 }}>
+                  Corrigido o problema do cursor que voltava para o início
+                  durante a digitação:
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                    • 🔧 Cursor agora permanece na posição correta
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                    • ✍️ Digitação fluida da esquerda para a direita
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+                    • 🚫 Eliminado o problema de "digitar de trás para frente"
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Novidade 6: Sistema de Notificações */}
             <Card sx={{ backgroundColor: '#2a2a2a', border: '1px solid #333' }}>
               <CardContent>
                 <Box
@@ -638,7 +698,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                         variant="caption"
                         sx={{ color: '#888', fontSize: '0.75rem' }}
                       >
-                        📅 11 de Janeiro, 2025
+                        📅 24 de Setembro, 2025
                       </Typography>
                     </Box>
                   </Box>
@@ -660,7 +720,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
               </CardContent>
             </Card>
 
-            {/* Novidade 6: Layout Simplificado de Tarefas Importantes */}
+            {/* Novidade 7: Layout Simplificado de Tarefas Importantes */}
             <Card sx={{ backgroundColor: '#2a2a2a', border: '1px solid #333' }}>
               <CardContent>
                 <Box
@@ -691,7 +751,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
                         variant="caption"
                         sx={{ color: '#888', fontSize: '0.75rem' }}
                       >
-                        📅 16 de Janeiro, 2025
+                        📅 26 de Setembro, 2025
                       </Typography>
                     </Box>
                   </Box>

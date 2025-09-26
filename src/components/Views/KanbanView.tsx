@@ -27,6 +27,8 @@ import {
   Pause,
   Visibility,
   Add,
+  CheckBox,
+  CheckBoxOutlineBlank,
 } from '@mui/icons-material';
 import { Task, TaskStatus } from '../../types';
 import { useTasks } from '../../hooks/useTasks';
@@ -273,6 +275,35 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
     }
   };
 
+  const handleCompleteTask = async (task: Task) => {
+    // Trigger celebration when completing a task
+    triggerCelebration();
+
+    // Atualização otimista
+    setLocalTasks(prevTasks =>
+      prevTasks.map(t =>
+        t.id === task.id
+          ? {
+              ...t,
+              status: 'completed' as TaskStatus,
+              updated_at: new Date().toISOString(),
+            }
+          : t
+      )
+    );
+
+    try {
+      await updateTask(task.id, { status: 'completed' });
+    } catch (error) {
+      // Reverter mudança se houver erro
+      setLocalTasks(prevTasks =>
+        prevTasks.map(t =>
+          t.id === task.id ? { ...t, status: task.status } : t
+        )
+      );
+    }
+  };
+
   const getTasksByStatus = (status: TaskStatus) => {
     return localTasks.filter(task => task.status === status);
   };
@@ -448,28 +479,68 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
                                             lineHeight: 1.3,
                                             flex: 1,
                                             pr: 1,
+                                            textDecoration:
+                                              task.status === 'completed'
+                                                ? 'line-through'
+                                                : 'none',
+                                            opacity:
+                                              task.status === 'completed'
+                                                ? 0.7
+                                                : 1,
                                           }}
                                         >
                                           {task.title}
                                         </Typography>
-                                        <IconButton
-                                          size="small"
-                                          onClick={(
-                                            e: React.MouseEvent<HTMLElement>
-                                          ) => {
-                                            e.stopPropagation();
-                                            handleMenuOpen(e, task);
-                                          }}
-                                          sx={{
-                                            color: '#b0b0b0',
-                                            '&:hover': {
-                                              backgroundColor: '#444',
-                                              color: 'white',
-                                            },
-                                          }}
-                                        >
-                                          <MoreVert fontSize="small" />
-                                        </IconButton>
+
+                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                          {/* Checkbox para marcar como concluída */}
+                                          <IconButton
+                                            size="small"
+                                            onClick={(e: React.MouseEvent) => {
+                                              e.stopPropagation();
+                                              handleCompleteTask(task);
+                                            }}
+                                            sx={{
+                                              color:
+                                                task.status === 'completed'
+                                                  ? '#4caf50'
+                                                  : '#b0b0b0',
+                                              '&:hover': {
+                                                color:
+                                                  task.status === 'completed'
+                                                    ? '#4caf50'
+                                                    : '#4caf50',
+                                                backgroundColor:
+                                                  'rgba(76, 175, 80, 0.1)',
+                                              },
+                                            }}
+                                          >
+                                            {task.status === 'completed' ? (
+                                              <CheckBox fontSize="small" />
+                                            ) : (
+                                              <CheckBoxOutlineBlank fontSize="small" />
+                                            )}
+                                          </IconButton>
+
+                                          <IconButton
+                                            size="small"
+                                            onClick={(
+                                              e: React.MouseEvent<HTMLElement>
+                                            ) => {
+                                              e.stopPropagation();
+                                              handleMenuOpen(e, task);
+                                            }}
+                                            sx={{
+                                              color: '#b0b0b0',
+                                              '&:hover': {
+                                                backgroundColor: '#444',
+                                                color: 'white',
+                                              },
+                                            }}
+                                          >
+                                            <MoreVert fontSize="small" />
+                                          </IconButton>
+                                        </Box>
                                       </Box>
 
                                       {/* Descrição */}
