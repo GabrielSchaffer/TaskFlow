@@ -75,7 +75,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
     showFireworks,
     triggerCelebration,
     handleConfettiComplete,
-    handleFireworksComplete
+    handleFireworksComplete,
   } = useCelebration();
 
   // Contar tarefas por etapa
@@ -496,8 +496,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                   {/* Descrição da Tarefa */}
                   <TableCell sx={{ borderColor: '#333' }}>
                     {task.description ? (
-                      <Typography
-                        variant="body2"
+                      <Box
                         sx={{
                           color: '#b0b0b0',
                           fontSize: '0.875rem',
@@ -505,12 +504,52 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
+                          '& h1, & h2, & h3, & h4, & h5, & h6': {
+                            color: '#b0b0b0',
+                            margin: '2px 0',
+                            fontSize: '0.875rem',
+                          },
+                          '& p': {
+                            color: '#b0b0b0',
+                            margin: '1px 0',
+                            fontSize: '0.875rem',
+                          },
+                          '& strong, & b': {
+                            fontWeight: 'bold',
+                            color: '#b0b0b0',
+                          },
+                          '& em, & i': {
+                            fontStyle: 'italic',
+                            color: '#b0b0b0',
+                          },
+                          '& u': {
+                            textDecoration: 'underline',
+                            color: '#b0b0b0',
+                          },
+                          '& s, & strike': {
+                            textDecoration: 'line-through',
+                            color: '#b0b0b0',
+                          },
+                          '& a': {
+                            color: '#64b5f6',
+                            textDecoration: 'underline',
+                          },
+                          '& ul, & ol': {
+                            paddingLeft: '12px',
+                            color: '#b0b0b0',
+                          },
+                          '& li': {
+                            color: '#b0b0b0',
+                            margin: '1px 0',
+                          },
                         }}
-                      >
-                        {task.description.length > 100
-                          ? `${task.description.substring(0, 100)}...`
-                          : task.description}
-                      </Typography>
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            task.description.length > 100
+                              ? `${task.description.substring(0, 100)}...`
+                              : task.description,
+                        }}
+                      />
                     ) : (
                       <Typography
                         variant="body2"
@@ -724,14 +763,8 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
       )}
 
       {/* Celebration Animations */}
-      <Confetti
-        trigger={showConfetti}
-        onComplete={handleConfettiComplete}
-      />
-      <Fireworks
-        trigger={showFireworks}
-        onComplete={handleFireworksComplete}
-      />
+      <Confetti trigger={showConfetti} onComplete={handleConfettiComplete} />
+      <Fireworks trigger={showFireworks} onComplete={handleFireworksComplete} />
     </Box>
   );
 };

@@ -27,6 +27,7 @@ import { useTasks } from '../../hooks/useTasks';
 import { useCategories } from '../../hooks/useCategories';
 import { TaskFormData, Priority } from '../../types';
 import { Add } from '@mui/icons-material';
+import { RichTextEditor } from './RichTextEditor';
 
 dayjs.locale('pt-br');
 
@@ -250,19 +251,16 @@ export const TaskForm = ({
 
             {/* Descrição */}
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Descrição"
+              <RichTextEditor
                 value={formData.description}
-                onChange={handleChange('description')}
-                multiline
-                rows={3}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
+                onChange={(value: string) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    description: value,
+                  }))
+                }
+                label="Descrição"
+                placeholder="Digite uma descrição detalhada da tarefa..."
               />
             </Grid>
 
@@ -456,7 +454,7 @@ export const TaskForm = ({
             </Grid>
 
             {/* Status da Tarefa */}
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{}}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Status</InputLabel>
                 <Select

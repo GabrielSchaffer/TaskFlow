@@ -219,6 +219,13 @@ export const AuthForm = () => {
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
+                      sx={{
+                        color: '#667eea',
+                        '&:hover': {
+                          color: '#5a6fd8',
+                          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        },
+                      }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>

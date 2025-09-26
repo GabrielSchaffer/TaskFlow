@@ -26,6 +26,7 @@ import {
   PlayArrow,
   Pause,
   Visibility,
+  Add,
 } from '@mui/icons-material';
 import { Task, TaskStatus } from '../../types';
 import { useTasks } from '../../hooks/useTasks';
@@ -71,6 +72,9 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+  const [creatingTaskForStatus, setCreatingTaskForStatus] =
+    useState<TaskStatus | null>(null);
+  const [quickLoading, setQuickLoading] = useState(false);
 
   const {
     showConfetti,
@@ -247,6 +251,21 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
     }
   };
 
+  const handleCreateTask = (status: TaskStatus) => {
+    setCreatingTaskForStatus(status);
+  };
+
+  const handleTaskCreated = () => {
+    setCreatingTaskForStatus(null);
+  };
+
+  const triggerQuickLoading = () => {
+    setQuickLoading(true);
+    setTimeout(() => {
+      setQuickLoading(false);
+    }, 100); // Loading de apenas 100ms
+  };
+
   const handleViewTask = () => {
     if (selectedTask) {
       setPreviewTask(selectedTask);
@@ -290,8 +309,26 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
 
   return (
     <>
+      {quickLoading && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CircularProgress size={20} />
+        </Box>
+      )}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Box display="flex" gap={2} overflow="auto" minHeight="70vh">
+        <Box display="flex" gap={2} overflow="auto" minHeight="70vh" mt={1}>
           {Object.entries(statusConfig).map(([status, config]) => (
             <Box key={status} minWidth={300} flex={1}>
               <Card>
@@ -331,6 +368,7 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
                           <Box
                             sx={{
                               display: 'flex',
+                              flexDirection: 'column',
                               alignItems: 'center',
                               justifyContent: 'center',
                               minHeight: 100,
@@ -340,9 +378,15 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
                               border: '2px dashed #333',
                               borderRadius: 2,
                               backgroundColor: '#1a1a1a',
+                              gap: 1,
                             }}
                           >
-                            Arraste tarefas para cá
+                            <Typography
+                              variant="body2"
+                              sx={{ color: '#b0b0b0' }}
+                            >
+                              Arraste tarefas para cá
+                            </Typography>
                           </Box>
                         ) : (
                           getTasksByStatus(status as TaskStatus).map(
@@ -430,8 +474,7 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
 
                                       {/* Descrição */}
                                       {task.description && (
-                                        <Typography
-                                          variant="body2"
+                                        <Box
                                           sx={{
                                             color: '#b0b0b0',
                                             mb: 2,
@@ -440,15 +483,56 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
                                             WebkitLineClamp: 2,
                                             WebkitBoxOrient: 'vertical',
                                             overflow: 'hidden',
+                                            '& h1, & h2, & h3, & h4, & h5, & h6':
+                                              {
+                                                color: '#b0b0b0',
+                                                margin: '4px 0',
+                                                fontSize: '0.875rem',
+                                              },
+                                            '& p': {
+                                              color: '#b0b0b0',
+                                              margin: '2px 0',
+                                              fontSize: '0.875rem',
+                                            },
+                                            '& strong, & b': {
+                                              fontWeight: 'bold',
+                                              color: '#b0b0b0',
+                                            },
+                                            '& em, & i': {
+                                              fontStyle: 'italic',
+                                              color: '#b0b0b0',
+                                            },
+                                            '& u': {
+                                              textDecoration: 'underline',
+                                              color: '#b0b0b0',
+                                            },
+                                            '& s, & strike': {
+                                              textDecoration: 'line-through',
+                                              color: '#b0b0b0',
+                                            },
+                                            '& a': {
+                                              color: '#64b5f6',
+                                              textDecoration: 'underline',
+                                            },
+                                            '& ul, & ol': {
+                                              paddingLeft: '16px',
+                                              color: '#b0b0b0',
+                                            },
+                                            '& li': {
+                                              color: '#b0b0b0',
+                                              margin: '1px 0',
+                                            },
                                           }}
-                                        >
-                                          {task.description.length > 100
-                                            ? `${task.description.substring(
-                                                0,
-                                                100
-                                              )}...`
-                                            : task.description}
-                                        </Typography>
+                                          dangerouslySetInnerHTML={{
+                                            __html:
+                                              task.description.length > 100
+                                                ? `${task.description.substring(
+                                                    0,
+                                                    100
+                                                  )}...`
+                                                : task.description,
+                                          }}
+                                        />
                                       )}
 
                                       {/* Tags e informações */}
@@ -542,6 +626,39 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
                             )
                           )
                         )}
+
+                        {/* Botão + Criar quando há tarefas */}
+                        {getTasksByStatus(status as TaskStatus).length > 0 && (
+                          <Box
+                            onClick={() =>
+                              handleCreateTask(status as TaskStatus)
+                            }
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'left',
+                              justifyContent: 'left',
+                              gap: 0.5,
+                              padding: '8px 16px',
+                              // backgroundColor: '#1976d2',
+                              color: 'white',
+                              borderRadius: 1,
+                              border: '1px solid #333',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              fontWeight: 500,
+                              transition: 'all 0.2s ease',
+                              marginTop: 1,
+                              '&:hover': {
+                                transform: 'translateY(-1px)',
+                                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.3)',
+                              },
+                            }}
+                          >
+                            <Add fontSize="small" />
+                            Criar Tarefa
+                          </Box>
+                        )}
+
                         {provided.placeholder}
                       </Box>
                     )}
@@ -626,7 +743,8 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
           userId={editingTask.user_id}
           taskId={editingTask.id}
           onTaskUpdated={() => {
-            // Forçar atualização do estado local
+            // Trigger loading rápido e atualizar estado
+            triggerQuickLoading();
             setLocalTasks(tasks);
           }}
           initialData={{
@@ -637,6 +755,29 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
             category: editingTask.category,
             important: editingTask.important,
             status: editingTask.status,
+          }}
+        />
+      )}
+
+      {creatingTaskForStatus && (
+        <TaskForm
+          open={Boolean(creatingTaskForStatus)}
+          onClose={handleTaskCreated}
+          userId={tasks[0]?.user_id || ''}
+          onTaskUpdated={() => {
+            // Trigger loading rápido e atualizar estado
+            triggerQuickLoading();
+            setLocalTasks(tasks);
+            handleTaskCreated();
+          }}
+          initialData={{
+            title: '',
+            description: '',
+            due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Amanhã
+            priority: 'Média',
+            category: '',
+            important: false,
+            status: creatingTaskForStatus,
           }}
         />
       )}

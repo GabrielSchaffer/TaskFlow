@@ -124,8 +124,7 @@ export const TaskPreview = ({
               <Typography variant="body1" sx={{ color: '#b0b0b0', mb: 1 }}>
                 Descrição:
               </Typography>
-              <Typography
-                variant="body1"
+              <Box
                 sx={{
                   color: 'white',
                   backgroundColor: '#2a2a2a',
@@ -133,11 +132,66 @@ export const TaskPreview = ({
                   borderRadius: 1,
                   border: '1px solid #333',
                   minHeight: '80px',
-                  whiteSpace: 'pre-wrap',
+                  '& h1, & h2, & h3, & h4, & h5, & h6': {
+                    color: 'white',
+                    margin: '8px 0',
+                  },
+                  '& p': {
+                    color: 'white',
+                    margin: '4px 0',
+                  },
+                  '& strong, & b': {
+                    fontWeight: 'bold',
+                    color: 'white',
+                  },
+                  '& em, & i': {
+                    fontStyle: 'italic',
+                    color: 'white',
+                  },
+                  '& u': {
+                    textDecoration: 'underline',
+                    color: 'white',
+                  },
+                  '& s, & strike': {
+                    textDecoration: 'line-through',
+                    color: 'white',
+                  },
+                  '& a': {
+                    color: '#64b5f6',
+                    textDecoration: 'underline',
+                    '&:hover': {
+                      color: '#90caf9',
+                    },
+                  },
+                  '& blockquote': {
+                    borderLeft: '4px solid #555',
+                    paddingLeft: '16px',
+                    margin: '8px 0',
+                    color: '#ccc',
+                    fontStyle: 'italic',
+                  },
+                  '& code': {
+                    backgroundColor: '#1a1a1a',
+                    padding: '2px 4px',
+                    borderRadius: '3px',
+                    fontFamily: 'monospace',
+                    color: '#ffeb3b',
+                  },
+                  '& ul, & ol': {
+                    paddingLeft: '20px',
+                    color: 'white',
+                  },
+                  '& li': {
+                    color: 'white',
+                    margin: '2px 0',
+                  },
                 }}
-              >
-                {task.description || 'Sem descrição'}
-              </Typography>
+                dangerouslySetInnerHTML={{
+                  __html:
+                    task.description ||
+                    '<p style="color: #666; font-style: italic;">Sem descrição</p>',
+                }}
+              />
             </Box>
           </Grid>
 

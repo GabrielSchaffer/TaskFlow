@@ -215,7 +215,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                 <Grid item xs key={`${weekIndex}-${dayIndex}`}>
                   <Box
                     sx={{
-                      minHeight: 120,
+                      minHeight: 140,
                       p: 1,
                       border: '1px solid',
                       borderColor: '#333',
@@ -239,6 +239,8 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                       opacity: isCurrentMonthDay ? 1 : 0.4,
                       cursor: 'pointer',
                       position: 'relative',
+                      display: 'flex',
+                      flexDirection: 'column',
                       '&:hover': {
                         backgroundColor: isCurrentDay
                           ? '#1565c0'
@@ -286,80 +288,87 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 0.5,
+                        flex: 1,
+                        justifyContent: 'flex-start',
+                        overflow: 'hidden',
                       }}
                     >
-                      {dayTasks.slice(0, 3).map((task, taskIndex) => (
-                        <Tooltip
-                          key={task.id}
-                          title={`${task.title} - ${
-                            task.description || 'Sem descrição'
-                          }`}
-                        >
-                          <Box
-                            sx={{
-                              backgroundColor: priorityColors[task.priority],
-                              color: 'white',
-                              borderRadius: 1,
-                              p: 0.5,
-                              fontSize: '0.7rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                              '&:hover': {
-                                opacity: 0.8,
-                              },
-                            }}
-                            onClick={(e: React.MouseEvent<HTMLElement>) => {
-                              e.stopPropagation();
-                              handleMenuOpen(e, task);
-                            }}
+                      {dayTasks.length > 0 && (
+                        <>
+                          {/* Mostrar apenas a primeira tarefa */}
+                          <Tooltip
+                            title={`${dayTasks[0].title} - ${
+                              dayTasks[0].description || 'Sem descrição'
+                            }`}
                           >
-                            <Typography
-                              variant="caption"
-                              sx={{ fontWeight: 'bold' }}
-                            >
-                              {formatTaskTime(task)}
-                            </Typography>
-                            <Typography
-                              variant="caption"
+                            <Box
                               sx={{
-                                flex: 1,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
+                                backgroundColor:
+                                  priorityColors[dayTasks[0].priority],
+                                color: 'white',
+                                borderRadius: 1,
+                                p: 0.5,
+                                fontSize: '0.7rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                '&:hover': {
+                                  opacity: 0.8,
+                                },
+                              }}
+                              onClick={(e: React.MouseEvent<HTMLElement>) => {
+                                e.stopPropagation();
+                                handleMenuOpen(e, dayTasks[0]);
                               }}
                             >
-                              {task.title}
-                            </Typography>
-                            <Typography variant="caption">
-                              {priorityIcons[task.priority]}
-                            </Typography>
-                          </Box>
-                        </Tooltip>
-                      ))}
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 'bold' }}
+                              >
+                                {formatTaskTime(dayTasks[0])}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  flex: 1,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {dayTasks[0].title}
+                              </Typography>
+                              <Typography variant="caption">
+                                {priorityIcons[dayTasks[0].priority]}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
 
-                      {dayTasks.length > 3 && (
-                        <Box
-                          sx={{
-                            backgroundColor: '#444',
-                            color: '#b0b0b0',
-                            borderRadius: 1,
-                            p: 0.5,
-                            textAlign: 'center',
-                            fontSize: '0.7rem',
-                            cursor: 'pointer',
-                            '&:hover': {
-                              backgroundColor: '#555',
-                            },
-                          }}
-                          onClick={(e: React.MouseEvent<HTMLElement>) => {
-                            e.stopPropagation();
-                            handleDateChange(day);
-                          }}
-                        >
-                          +{dayTasks.length - 3} mais
-                        </Box>
+                          {/* Contador para tarefas adicionais */}
+                          {dayTasks.length > 1 && (
+                            <Box
+                              sx={{
+                                backgroundColor: '#444',
+                                color: '#b0b0b0',
+                                borderRadius: 1,
+                                p: 0.5,
+                                textAlign: 'center',
+                                fontSize: '0.7rem',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  backgroundColor: '#555',
+                                },
+                              }}
+                              onClick={(e: React.MouseEvent<HTMLElement>) => {
+                                e.stopPropagation();
+                                handleDateChange(day);
+                              }}
+                            >
+                              +{dayTasks.length - 1} tarefas
+                            </Box>
+                          )}
+                        </>
                       )}
                     </Box>
                   </Box>
@@ -447,14 +456,56 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                         </Typography>
 
                         {task.description && (
-                          <Typography
-                            variant="body2"
-                            sx={{ mb: 1, color: '#b0b0b0' }}
-                          >
-                            {task.description.length > 100
-                              ? `${task.description.substring(0, 100)}...`
-                              : task.description}
-                          </Typography>
+                          <Box
+                            sx={{
+                              mb: 1,
+                              color: '#b0b0b0',
+                              '& h1, & h2, & h3, & h4, & h5, & h6': {
+                                color: '#b0b0b0',
+                                margin: '2px 0',
+                                fontSize: '0.875rem',
+                              },
+                              '& p': {
+                                color: '#b0b0b0',
+                                margin: '1px 0',
+                                fontSize: '0.875rem',
+                              },
+                              '& strong, & b': {
+                                fontWeight: 'bold',
+                                color: '#b0b0b0',
+                              },
+                              '& em, & i': {
+                                fontStyle: 'italic',
+                                color: '#b0b0b0',
+                              },
+                              '& u': {
+                                textDecoration: 'underline',
+                                color: '#b0b0b0',
+                              },
+                              '& s, & strike': {
+                                textDecoration: 'line-through',
+                                color: '#b0b0b0',
+                              },
+                              '& a': {
+                                color: '#64b5f6',
+                                textDecoration: 'underline',
+                              },
+                              '& ul, & ol': {
+                                paddingLeft: '12px',
+                                color: '#b0b0b0',
+                              },
+                              '& li': {
+                                color: '#b0b0b0',
+                                margin: '1px 0',
+                              },
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                task.description.length > 100
+                                  ? `${task.description.substring(0, 100)}...`
+                                  : task.description,
+                            }}
+                          />
                         )}
 
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

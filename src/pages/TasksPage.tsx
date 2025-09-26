@@ -90,7 +90,9 @@ export const TasksPage = () => {
       {/* Header Moderno com Filtros */}
       <Box
         sx={{
-          p: 4,
+          py: 1,
+          px: 2,
+          pb: 2,
           backgroundColor: '#1e1e1e',
           borderBottom: '1px solid #333',
           background: 'linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%)',
@@ -101,60 +103,9 @@ export const TasksPage = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            mb: 3,
+            mb: 1,
           }}
-        >
-          <Box>
-            <Typography
-              variant="h3"
-              sx={{
-                color: 'white',
-                mb: 1,
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              {getViewTitle()}
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                color: '#b0b0b0',
-                fontWeight: 400,
-                lineHeight: 1.4,
-              }}
-            >
-              {getViewDescription()}
-            </Typography>
-          </Box>
-
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setShowTaskForm(true)}
-            sx={{
-              backgroundColor: '#1976d2',
-              borderRadius: 2,
-              px: 3,
-              py: 1.5,
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
-              '&:hover': {
-                backgroundColor: '#1565c0',
-                boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
-                transform: 'translateY(-1px)',
-              },
-              transition: 'all 0.2s ease-in-out',
-            }}
-          >
-            Nova Tarefa
-          </Button>
-        </Box>
+        ></Box>
 
         {/* Filtros de Visualização Modernos */}
         <Box
@@ -162,7 +113,7 @@ export const TasksPage = () => {
             display: 'flex',
             alignItems: 'center',
             gap: 3,
-            p: 2,
+            p: 0.8,
             backgroundColor: '#2a2a2a',
             borderRadius: 2,
             border: '1px solid #333',
@@ -174,7 +125,7 @@ export const TasksPage = () => {
               sx={{
                 color: '#e0e0e0',
                 fontWeight: 500,
-                fontSize: '0.875rem',
+                fontSize: '0.775rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
               }}
@@ -226,17 +177,21 @@ export const TasksPage = () => {
               },
             }}
           >
-            <ToggleButton value="kanban" aria-label="kanban">
-              <ViewKanban sx={{ mr: 1.5, fontSize: '1.1rem' }} />
+            <ToggleButton
+              value="kanban"
+              aria-label="kanban"
+              sx={{ fontSize: '12px !important' }}
+            >
+              <ViewKanban sx={{ mr: 1, fontSize: '16px !important' }} />
               Kanban
             </ToggleButton>
-            <ToggleButton value="calendar" aria-label="calendário">
-              <CalendarMonth sx={{ mr: 1.5, fontSize: '1.1rem' }} />
+            <ToggleButton
+              value="calendar"
+              aria-label="calendário"
+              sx={{ fontSize: '12px !important' }}
+            >
+              <CalendarMonth sx={{ mr: 1, fontSize: '16px !important' }} />
               Calendário
-            </ToggleButton>
-            <ToggleButton value="list" aria-label="lista">
-              <ViewList sx={{ mr: 1.5, fontSize: '1.1rem' }} />
-              Lista
             </ToggleButton>
           </ToggleButtonGroup>
 
