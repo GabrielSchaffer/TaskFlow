@@ -360,7 +360,7 @@ export const DashboardPage = () => {
                 fontSize: '1rem',
               }}
             >
-              Tarefas urgentes
+              Tarefas Importantes
             </Typography>
           </Box>
         </Grid>

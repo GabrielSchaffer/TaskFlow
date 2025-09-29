@@ -160,7 +160,7 @@ export const Dashboard = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Urgentes
+                  Importantes
                 </Typography>
                 <Typography variant="h4" color="error">
                   {urgentTasks.length}
@@ -197,7 +197,7 @@ export const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Alertas para tarefas urgentes */}
+        {/* Alertas para tarefas Importantes */}
         {urgentTasks.length > 0 && (
           <Alert severity="warning" sx={{ mb: 3 }}>
             Você tem {urgentTasks.length} tarefa(s) urgente(s) pendente(s) para

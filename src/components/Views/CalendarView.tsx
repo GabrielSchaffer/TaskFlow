@@ -1,12 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
   CircularProgress,
   Grid,
   Paper,
@@ -17,7 +12,8 @@ import {
   Alert,
   Tooltip,
 } from '@mui/material';
-import { Edit, Delete, Add, Visibility } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
+// Removido react-beautiful-dnd devido a problemas de compatibilidade
 import { Task } from '../../types';
 import { useTasks } from '../../hooks/useTasks';
 import { TaskForm } from '../Tasks/TaskForm';
@@ -45,24 +41,23 @@ const priorityIcons = {
 } as const;
 
 export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
-  const { deleteTask } = useTasks(tasks[0]?.user_id || '');
+  const { deleteTask, updateTask } = useTasks(tasks[0]?.user_id || '');
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentDate] = useState(dayjs());
   const [showNewTask, setShowNewTask] = useState(false);
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(dayjs());
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<dayjs.Dayjs | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, task: Task) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedTask(task);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedTask(null);
-  };
+  // Sincronizar estado local com as tarefas
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
 
   const handlePreviewTask = (task: Task) => {
     setPreviewTask(task);
@@ -75,29 +70,94 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
     }
   };
 
-  const handleViewTask = () => {
-    if (selectedTask) {
-      setPreviewTask(selectedTask);
-      handleMenuClose();
+  // Funções para drag and drop customizado
+  const handleMouseDown = (e: React.MouseEvent, task: Task) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log('Mouse down on task:', task.title);
+
+    // Calcular offset do mouse em relação ao card
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    setDraggedTask(task);
+    setIsDragging(true);
+    setMousePosition({ x: e.clientX, y: e.clientY });
+    setDragOffset({ x: offsetX, y: offsetY });
+
+    console.log('States updated:', {
+      isDragging: true,
+      draggedTask: task.title,
+      offset: { x: offsetX, y: offsetY },
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging && draggedTask) {
+      e.preventDefault();
+      setMousePosition({ x: e.clientX, y: e.clientY });
+
+      // Verificar se está sobre um dia do calendário
+      const element = document.elementFromPoint(e.clientX, e.clientY);
+      if (element) {
+        const dayElement = element.closest('[data-day]');
+        if (dayElement) {
+          const dayString = dayElement.getAttribute('data-day');
+          if (dayString) {
+            const day = dayjs(dayString);
+            setDragOverDate(day);
+          }
+        } else {
+          setDragOverDate(null);
+        }
+      }
     }
   };
 
-  const handleEditTask = () => {
-    if (selectedTask) {
-      setEditingTask(selectedTask);
-      handleMenuClose();
+  const handleMouseUp = async (e: MouseEvent) => {
+    if (isDragging && draggedTask && dragOverDate) {
+      // Atualizar a data da tarefa
+      const updatedTask = {
+        ...draggedTask,
+        due_date: dragOverDate.toISOString(),
+      };
+
+      // Atualizar estado local imediatamente
+      setLocalTasks(prevTasks =>
+        prevTasks.map(task => (task.id === draggedTask.id ? updatedTask : task))
+      );
+
+      // Atualizar no banco de dados
+      await updateTask(draggedTask.id, updatedTask);
     }
+
+    // Limpar estados imediatamente
+    setDraggedTask(null);
+    setDragOverDate(null);
+    setIsDragging(false);
+    setMousePosition({ x: 0, y: 0 });
+    setDragOffset({ x: 0, y: 0 });
   };
 
-  const handleDeleteTask = async () => {
-    if (selectedTask) {
-      await deleteTask(selectedTask.id);
-      handleMenuClose();
+  // Listener para capturar movimento do mouse durante drag
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'none'; // Prevenir seleção de texto
     }
-  };
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'auto';
+    };
+  }, [isDragging, draggedTask, dragOverDate]);
 
   const getTasksForDate = (date: dayjs.Dayjs) => {
-    return tasks.filter(task => {
+    return localTasks.filter(task => {
       const taskDate = dayjs(task.due_date);
       return taskDate.isSame(date, 'day');
     });
@@ -214,17 +274,22 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
               return (
                 <Grid item xs key={`${weekIndex}-${dayIndex}`}>
                   <Box
+                    data-day={day.format('YYYY-MM-DD')}
                     sx={{
-                      minHeight: 140,
+                      minHeight: 160,
                       p: 1,
                       border: '1px solid',
-                      borderColor: '#333',
+                      borderColor: dragOverDate?.isSame(day, 'day')
+                        ? '#4caf50'
+                        : '#333',
                       borderRight: dayIndex === 6 ? 'none' : '1px solid #333',
                       borderBottom:
                         weekIndex < weeks.length - 1
                           ? '1px solid #333'
                           : 'none',
-                      backgroundColor: isCurrentDay
+                      backgroundColor: dragOverDate?.isSame(day, 'day')
+                        ? '#4caf50'
+                        : isCurrentDay
                         ? '#1976d2'
                         : isWeekend
                         ? '#2a2a2a'
@@ -241,6 +306,8 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                       position: 'relative',
                       display: 'flex',
                       flexDirection: 'column',
+                      transition: 'all 0.2s ease',
+                      userSelect: 'none',
                       '&:hover': {
                         backgroundColor: isCurrentDay
                           ? '#1565c0'
@@ -248,6 +315,16 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                           ? '#2a2a2a'
                           : '#1a1a1a',
                       },
+                      // Estilo quando está sendo arrastado sobre
+                      ...(dragOverDate?.isSame(day, 'day') && {
+                        backgroundColor: isCurrentDay
+                          ? '#1565c0'
+                          : isCurrentMonthDay
+                          ? '#2a2a2a'
+                          : '#1a1a1a',
+                        borderColor: '#1976d2',
+                        borderWidth: '2px',
+                      }),
                     }}
                     onClick={() => handleDateChange(day)}
                   >
@@ -282,93 +359,368 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                       )}
                     </Box>
 
-                    {/* Tarefas do dia */}
+                    {/* Tarefas do dia - Grid 3x3 */}
                     <Box
                       sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 0.5,
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gridTemplateRows: 'repeat(3, 1fr)',
+                        gap: 0.3,
                         flex: 1,
-                        justifyContent: 'flex-start',
+                        minHeight: '90px',
                         overflow: 'hidden',
                       }}
                     >
-                      {dayTasks.length > 0 && (
-                        <>
-                          {/* Mostrar apenas a primeira tarefa */}
-                          <Tooltip
-                            title={`${dayTasks[0].title} - ${
-                              dayTasks[0].description || 'Sem descrição'
-                            }`}
+                      {/* Indicador de drop com card */}
+                      {dragOverDate?.isSame(day, 'day') && draggedTask && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            zIndex: 10,
+                            pointerEvents: 'none',
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                              border: '2px dashed #4caf50',
+                              borderRadius: 2,
+                              p: 1.5,
+                              minWidth: '140px',
+                              maxWidth: '220px',
+                              textAlign: 'center',
+                              backdropFilter: 'blur(4px)',
+                            }}
                           >
                             <Box
                               sx={{
-                                backgroundColor:
-                                  priorityColors[dayTasks[0].priority],
-                                color: 'white',
-                                borderRadius: 1,
-                                p: 0.5,
-                                fontSize: '0.7rem',
-                                cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: 0.5,
-                                '&:hover': {
-                                  opacity: 0.8,
-                                },
-                              }}
-                              onClick={(e: React.MouseEvent<HTMLElement>) => {
-                                e.stopPropagation();
-                                handleMenuOpen(e, dayTasks[0]);
+                                mb: 0.5,
                               }}
                             >
-                              <Typography
-                                variant="caption"
-                                sx={{ fontWeight: 'bold' }}
-                              >
-                                {formatTaskTime(dayTasks[0])}
-                              </Typography>
+                              <Box
+                                sx={{
+                                  width: '8px',
+                                  height: '8px',
+                                  borderRadius: '50%',
+                                  backgroundColor:
+                                    priorityColors[draggedTask.priority],
+                                }}
+                              />
                               <Typography
                                 variant="caption"
                                 sx={{
-                                  flex: 1,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
+                                  color: '#4caf50',
+                                  fontWeight: 'bold',
+                                  fontSize: '0.75rem',
                                 }}
                               >
-                                {dayTasks[0].title}
-                              </Typography>
-                              <Typography variant="caption">
-                                {priorityIcons[dayTasks[0].priority]}
+                                {draggedTask.title}
                               </Typography>
                             </Box>
-                          </Tooltip>
-
-                          {/* Contador para tarefas adicionais */}
-                          {dayTasks.length > 1 && (
-                            <Box
+                            <Typography
+                              variant="caption"
                               sx={{
-                                backgroundColor: '#444',
-                                color: '#b0b0b0',
-                                borderRadius: 1,
-                                p: 0.5,
-                                textAlign: 'center',
+                                color: '#4caf50',
                                 fontSize: '0.7rem',
-                                cursor: 'pointer',
-                                '&:hover': {
-                                  backgroundColor: '#555',
-                                },
-                              }}
-                              onClick={(e: React.MouseEvent<HTMLElement>) => {
-                                e.stopPropagation();
-                                handleDateChange(day);
+                                opacity: 0.8,
+                                display: 'block',
                               }}
                             >
-                              +{dayTasks.length - 1} tarefas
+                              → {day.format('DD/MM')}
+                            </Typography>
+                            {draggedTask.important && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: '#ff9800',
+                                  fontSize: '0.7rem',
+                                  display: 'block',
+                                  mt: 0.5,
+                                }}
+                              >
+                                ⭐ Importante
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      )}
+
+                      {dayTasks.length > 0 && (
+                        <Box>
+                          {/* Layout adaptativo baseado na quantidade de tarefas */}
+                          {dayTasks.length <= 3 ? (
+                            // Layout em linha para 1-3 tarefas
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 0.5,
+                                flex: 1,
+                              }}
+                            >
+                              {dayTasks.map((task, index) => (
+                                <Box
+                                  key={task.id}
+                                  onMouseDown={e => handleMouseDown(e, task)}
+                                  sx={{
+                                    backgroundColor:
+                                      priorityColors[task.priority],
+                                    color: 'white',
+                                    borderRadius: 1,
+                                    p: 0.5,
+                                    fontSize: '0.7rem',
+                                    cursor:
+                                      isDragging && draggedTask?.id === task.id
+                                        ? 'grabbing'
+                                        : 'grab',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    minHeight: '24px',
+                                    position:
+                                      isDragging && draggedTask?.id === task.id
+                                        ? 'fixed'
+                                        : 'relative',
+                                    zIndex:
+                                      isDragging && draggedTask?.id === task.id
+                                        ? 9999
+                                        : 'auto',
+                                    transform:
+                                      isDragging && draggedTask?.id === task.id
+                                        ? `translate(${
+                                            mousePosition.x - dragOffset.x
+                                          }px, ${
+                                            mousePosition.y - dragOffset.y
+                                          }px) rotate(2deg) scale(1.05)`
+                                        : 'none',
+                                    opacity:
+                                      isDragging && draggedTask?.id === task.id
+                                        ? 0.8
+                                        : 1,
+                                    boxShadow:
+                                      isDragging && draggedTask?.id === task.id
+                                        ? '0 8px 25px rgba(0, 0, 0, 0.3)'
+                                        : 'none',
+                                    '&:hover': {
+                                      opacity: 0.8,
+                                      transform:
+                                        isDragging &&
+                                        draggedTask?.id === task.id
+                                          ? `translate(${
+                                              mousePosition.x - dragOffset.x
+                                            }px, ${
+                                              mousePosition.y - dragOffset.y
+                                            }px) rotate(2deg) scale(1.05)`
+                                          : 'scale(1.02)',
+                                    },
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 0.5,
+                                      flex: 1,
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        fontWeight: 'bold',
+                                        fontSize: '0.65rem',
+                                        lineHeight: 1,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        flex: 1,
+                                      }}
+                                    >
+                                      {task.title.length > 12
+                                        ? `${task.title.substring(0, 12)}...`
+                                        : task.title}
+                                    </Typography>
+                                    {task.important && (
+                                      <Typography sx={{ fontSize: '0.6rem' }}>
+                                        ⭐
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      fontSize: '0.6rem',
+                                      opacity: 0.8,
+                                      ml: 0.5,
+                                    }}
+                                  >
+                                    {formatTaskTime(task)}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Box>
+                          ) : (
+                            // Layout em grid para 4+ tarefas
+                            <Box
+                              sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gridTemplateRows: 'repeat(3, 1fr)',
+                                gap: 0.3,
+                                flex: 1,
+                                minHeight: '90px',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {dayTasks.slice(0, 9).map((task, index) => (
+                                <Tooltip
+                                  key={task.id}
+                                  title={`${task.title} - ${
+                                    task.description || 'Sem descrição'
+                                  }`}
+                                >
+                                  <Box
+                                    onMouseDown={e => handleMouseDown(e, task)}
+                                    sx={{
+                                      backgroundColor:
+                                        priorityColors[task.priority],
+                                      color: 'white',
+                                      borderRadius: 1,
+                                      p: 0.3,
+                                      fontSize: '0.6rem',
+                                      cursor:
+                                        isDragging &&
+                                        draggedTask?.id === task.id
+                                          ? 'grabbing'
+                                          : 'grab',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      minHeight: '20px',
+                                      position:
+                                        isDragging &&
+                                        draggedTask?.id === task.id
+                                          ? 'fixed'
+                                          : 'relative',
+                                      zIndex:
+                                        isDragging &&
+                                        draggedTask?.id === task.id
+                                          ? 9999
+                                          : 'auto',
+                                      transform:
+                                        isDragging &&
+                                        draggedTask?.id === task.id
+                                          ? `translate(${
+                                              mousePosition.x - dragOffset.x
+                                            }px, ${
+                                              mousePosition.y - dragOffset.y
+                                            }px) rotate(2deg) scale(1.05)`
+                                          : 'none',
+                                      opacity:
+                                        isDragging &&
+                                        draggedTask?.id === task.id
+                                          ? 0.8
+                                          : 1,
+                                      boxShadow:
+                                        isDragging &&
+                                        draggedTask?.id === task.id
+                                          ? '0 8px 25px rgba(0, 0, 0, 0.3)'
+                                          : 'none',
+                                      '&:hover': {
+                                        opacity: 0.8,
+                                        transform:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? `translate(${
+                                                mousePosition.x - dragOffset.x
+                                              }px, ${
+                                                mousePosition.y - dragOffset.y
+                                              }px) rotate(2deg) scale(1.05)`
+                                            : 'scale(1.05)',
+                                      },
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        fontWeight: 'bold',
+                                        fontSize: '0.5rem',
+                                        lineHeight: 1,
+                                      }}
+                                    >
+                                      {formatTaskTime(task)}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        fontSize: '0.5rem',
+                                        lineHeight: 1,
+                                        textAlign: 'center',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        width: '100%',
+                                      }}
+                                    >
+                                      {task.title.length > 8
+                                        ? `${task.title.substring(0, 8)}...`
+                                        : task.title}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{ fontSize: '0.5rem' }}
+                                    >
+                                      {priorityIcons[task.priority]}
+                                    </Typography>
+                                  </Box>
+                                </Tooltip>
+                              ))}
+
+                              {/* Contador para tarefas extras (acima de 9) */}
+                              {dayTasks.length > 9 && (
+                                <Box
+                                  sx={{
+                                    backgroundColor: '#444',
+                                    color: '#b0b0b0',
+                                    borderRadius: 0.5,
+                                    p: 0.3,
+                                    textAlign: 'center',
+                                    fontSize: '0.5rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minHeight: '20px',
+                                    gridColumn: '1 / -1',
+                                    '&:hover': {
+                                      backgroundColor: '#555',
+                                    },
+                                  }}
+                                  onClick={(
+                                    e: React.MouseEvent<HTMLElement>
+                                  ) => {
+                                    e.stopPropagation();
+                                    handleDateChange(day);
+                                  }}
+                                >
+                                  +{dayTasks.length - 9} tarefas
+                                </Box>
+                              )}
                             </Box>
                           )}
-                        </>
+                        </Box>
                       )}
                     </Box>
                   </Box>
@@ -399,7 +751,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
             }}
           >
             <Typography variant="h6" sx={{ color: 'white' }}>
-              Tarefas para {selectedDate.format('DD/MM/YYYY')}
+              Tarefas para {selectedDate?.format('DD/MM/YYYY')}
             </Typography>
 
             <Button
@@ -418,177 +770,167 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
             </Button>
           </Box>
 
-          {getTasksForDate(selectedDate).length === 0 ? (
+          {selectedDate && getTasksForDate(selectedDate).length === 0 ? (
             <Alert severity="info">Nenhuma tarefa para este dia</Alert>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {getTasksForDate(selectedDate).map(task => (
-                <Card
-                  key={task.id}
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    handlePreviewTask(task);
-                  }}
-                  sx={{
-                    mb: 1,
-                    cursor: 'pointer',
-                    backgroundColor: '#2a2a2a',
-                    border: '1px solid #333',
-                    '&:hover': {
-                      backgroundColor: '#333',
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                      }}
-                    >
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: 'bold', mb: 0.5, color: 'white' }}
-                        >
-                          {task.title}
-                        </Typography>
-
-                        {task.description && (
-                          <Box
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+                minHeight: 50,
+              }}
+            >
+              {selectedDate &&
+                getTasksForDate(selectedDate).map((task, index) => (
+                  <Card
+                    key={task.id}
+                    onMouseDown={e => handleMouseDown(e, task)}
+                    sx={{
+                      mb: 1,
+                      cursor:
+                        isDragging && draggedTask?.id === task.id
+                          ? 'grabbing'
+                          : 'grab',
+                      backgroundColor: '#2a2a2a',
+                      border: '1px solid #333',
+                      transition:
+                        draggedTask?.id === task.id ? 'none' : 'all 0.2s ease',
+                      opacity: draggedTask?.id === task.id ? 0.8 : 1,
+                      transform:
+                        draggedTask?.id === task.id
+                          ? `translate(${mousePosition.x - dragOffset.x}px, ${
+                              mousePosition.y - dragOffset.y
+                            }px) rotate(2deg) scale(1.05)`
+                          : 'none',
+                      position:
+                        draggedTask?.id === task.id ? 'fixed' : 'relative',
+                      zIndex: draggedTask?.id === task.id ? 9999 : 'auto',
+                      boxShadow:
+                        draggedTask?.id === task.id
+                          ? '0 8px 25px rgba(0, 0, 0, 0.3)'
+                          : 'none',
+                      '&:hover': {
+                        backgroundColor: '#333',
+                      },
+                      '&:active': {
+                        cursor: 'grabbing',
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant="subtitle2"
                             sx={{
-                              mb: 1,
-                              color: '#b0b0b0',
-                              '& h1, & h2, & h3, & h4, & h5, & h6': {
-                                color: '#b0b0b0',
-                                margin: '2px 0',
-                                fontSize: '0.875rem',
-                              },
-                              '& p': {
-                                color: '#b0b0b0',
-                                margin: '1px 0',
-                                fontSize: '0.875rem',
-                              },
-                              '& strong, & b': {
-                                fontWeight: 'bold',
-                                color: '#b0b0b0',
-                              },
-                              '& em, & i': {
-                                fontStyle: 'italic',
-                                color: '#b0b0b0',
-                              },
-                              '& u': {
-                                textDecoration: 'underline',
-                                color: '#b0b0b0',
-                              },
-                              '& s, & strike': {
-                                textDecoration: 'line-through',
-                                color: '#b0b0b0',
-                              },
-                              '& a': {
-                                color: '#64b5f6',
-                                textDecoration: 'underline',
-                              },
-                              '& ul, & ol': {
-                                paddingLeft: '12px',
-                                color: '#b0b0b0',
-                              },
-                              '& li': {
-                                color: '#b0b0b0',
-                                margin: '1px 0',
-                              },
-                            }}
-                            dangerouslySetInnerHTML={{
-                              __html:
-                                task.description.length > 100
-                                  ? `${task.description.substring(0, 100)}...`
-                                  : task.description,
-                            }}
-                          />
-                        )}
-
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          <Chip
-                            label={task.priority}
-                            size="small"
-                            sx={{
-                              backgroundColor: priorityColors[task.priority],
+                              fontWeight: 'bold',
+                              mb: 0.5,
                               color: 'white',
                             }}
-                          />
+                          >
+                            {task.title}
+                          </Typography>
 
-                          {task.category && (
-                            <Chip
-                              label={task.category}
-                              size="small"
-                              variant="outlined"
+                          {task.description && (
+                            <Box
                               sx={{
+                                mb: 1,
                                 color: '#b0b0b0',
-                                borderColor: '#555',
-                                '&:hover': {
-                                  borderColor: '#777',
+                                '& h1, & h2, & h3, & h4, & h5, & h6': {
+                                  color: '#b0b0b0',
+                                  margin: '2px 0',
+                                  fontSize: '0.875rem',
                                 },
+                                '& p': {
+                                  color: '#b0b0b0',
+                                  margin: '1px 0',
+                                  fontSize: '0.875rem',
+                                },
+                                '& strong, & b': {
+                                  fontWeight: 'bold',
+                                  color: '#b0b0b0',
+                                },
+                                '& em, & i': {
+                                  fontStyle: 'italic',
+                                  color: '#b0b0b0',
+                                },
+                                '& u': {
+                                  textDecoration: 'underline',
+                                  color: '#b0b0b0',
+                                },
+                                '& s, & strike': {
+                                  textDecoration: 'line-through',
+                                  color: '#b0b0b0',
+                                },
+                                '& a': {
+                                  color: '#64b5f6',
+                                  textDecoration: 'underline',
+                                },
+                                '& ul, & ol': {
+                                  paddingLeft: '12px',
+                                  color: '#b0b0b0',
+                                },
+                                '& li': {
+                                  color: '#b0b0b0',
+                                  margin: '1px 0',
+                                },
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  task.description.length > 100
+                                    ? `${task.description.substring(0, 100)}...`
+                                    : task.description,
                               }}
                             />
                           )}
+
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 1,
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <Chip
+                              label={task.priority}
+                              size="small"
+                              sx={{
+                                backgroundColor: priorityColors[task.priority],
+                                color: 'white',
+                              }}
+                            />
+
+                            {task.category && (
+                              <Chip
+                                label={task.category}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  color: '#b0b0b0',
+                                  borderColor: '#555',
+                                  '&:hover': {
+                                    borderColor: '#777',
+                                  },
+                                }}
+                              />
+                            )}
+                          </Box>
                         </Box>
                       </Box>
-
-                      <IconButton
-                        size="small"
-                        onClick={(e: React.MouseEvent<HTMLElement>) => {
-                          e.stopPropagation();
-                          handleMenuOpen(e, task);
-                        }}
-                        sx={{ color: '#b0b0b0' }}
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
             </Box>
           )}
         </Paper>
       )}
-
-      {/* Menu de Ações da Tarefa */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <MenuItem onClick={handleViewTask}>
-          <ListItemIcon>
-            <Visibility fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Visualizar</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={handleEditTask}>
-          <ListItemIcon>
-            <Edit fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Editar</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={handleDeleteTask} sx={{ color: 'error.main' }}>
-          <ListItemIcon>
-            <Delete fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>Excluir</ListItemText>
-        </MenuItem>
-      </Menu>
 
       {/* Modal de Nova/Edição de Tarefa */}
       <TaskForm

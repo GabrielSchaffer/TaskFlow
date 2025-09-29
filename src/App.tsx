@@ -10,6 +10,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TasksPage } from './pages/TasksPage';
 import { MyDayPage } from './pages/MyDayPage';
 import { ImportantPage } from './pages/ImportantPage';
+import { OverduePage } from './pages/OverduePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { CustomThemeProvider } from './contexts/ThemeContext';
@@ -56,6 +57,7 @@ function App() {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/my-day" element={<MyDayPage />} />
           <Route path="/important" element={<ImportantPage />} />
+          <Route path="/overdue" element={<OverduePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>

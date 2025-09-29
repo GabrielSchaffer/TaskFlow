@@ -28,7 +28,7 @@ Sistema completo de gerenciamento de tarefas diárias com interface moderna e fu
 - **Prioridades Dinâmicas**: Tarefas não concluídas aumentam automaticamente de prioridade
 - **Drag & Drop**: Reorganize tarefas facilmente no Kanban
 - **Filtros Inteligentes**: Visualize tarefas por data, prioridade e status
-- **Alertas Visuais**: Destaque para tarefas urgentes e atrasadas
+- **Alertas Visuais**: Destaque para tarefas Importantes e atrasadas
 - **Tempo Real**: Atualizações instantâneas com Supabase
 
 ## 🛠️ Tecnologias Utilizadas
@@ -217,7 +217,7 @@ O projeto estará disponível em `http://localhost:3000`
 
 - Tarefas não concluídas são movidas automaticamente para o próximo dia
 - A prioridade aumenta automaticamente quando movidas
-- Alertas visuais para tarefas urgentes e atrasadas
+- Alertas visuais para tarefas Importantes e atrasadas
 
 ### 4. **Personalização**
 

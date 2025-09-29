@@ -37,11 +37,16 @@ import {
   Palette,
   Campaign,
   Edit,
+  Warning,
+  Schedule,
+  PriorityHigh,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTasks } from '../../hooks/useTasks';
+import dayjs from 'dayjs';
 
 interface SidebarProps {
   onNewTask: () => void;
@@ -76,6 +81,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
   const { user, signOut } = useAuth();
   const { profile } = useProfile(user?.id || '');
   const { colorTheme } = useTheme();
+  const { tasks } = useTasks(user?.id || '');
   const [showNewsModal, setShowNewsModal] = useState(false);
 
   // Número de novidades (pode ser controlado por localStorage ou API)
@@ -89,6 +95,16 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
 
   // Contador de novidades não lidas - só mostra se não foram lidas
   const newsCount = newsRead ? 0 : totalNewsCount;
+
+  // Lógica para detectar tarefas vencidas
+  const overdueTasks = tasks.filter(task => {
+    const today = dayjs();
+    const dueDate = dayjs(task.due_date);
+    return dueDate.isBefore(today, 'day') && task.status !== 'completed';
+  });
+
+  const urgentTasks = overdueTasks.filter(task => task.priority === 'Alta');
+  const overdueCount = overdueTasks.length;
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -182,6 +198,120 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
           </ListItem>
         ))}
       </List>
+
+      {/* Avisos de Tarefas Vencidas - Design Elegante */}
+      {overdueCount > 0 && (
+        <Box sx={{ px: 2, py: 1 }}>
+          <Box
+            sx={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 2,
+              p: 2,
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                background: 'rgba(255, 255, 255, 0.08)',
+                transform: 'translateY(-1px)',
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '4px',
+                height: '100%',
+                background: 'linear-gradient(180deg, #ff6b6b 0%, #ff4444 100%)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                mb: 1.5,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 0.8,
+                  borderRadius: '50%',
+                  background:
+                    'linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(255, 107, 107, 0.3)',
+                }}
+              >
+                <Warning sx={{ fontSize: '1rem', color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '0.85rem',
+                    mb: 0.3,
+                  }}
+                >
+                  {overdueCount === 1
+                    ? '1 Tarefa Vencida'
+                    : `${overdueCount} Tarefas Vencidas`}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  Revisar pendências
+                </Typography>
+              </Box>
+              <Chip
+                label={overdueCount}
+                size="small"
+                sx={{
+                  background:
+                    'linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '0.7rem',
+                  height: '22px',
+                  boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)',
+                }}
+              />
+            </Box>
+
+            <Button
+              variant="text"
+              size="small"
+              startIcon={<Schedule />}
+              onClick={() => navigate('/overdue')}
+              sx={{
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '0.7rem',
+                py: 0.3,
+                px: 1,
+                borderRadius: 1,
+                textTransform: 'none',
+                width: '100%',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                },
+              }}
+            >
+              Ver Tarefas Vencidas
+            </Button>
+          </Box>
+        </Box>
+      )}
 
       {/* Botão Nova Tarefa no topo */}
       <Box sx={{ px: 2, py: 2 }}>

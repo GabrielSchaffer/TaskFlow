@@ -217,283 +217,309 @@ export const ImportantPage = () => {
                     />
                   </Box>
 
-                  {/* Lista de Tarefas */}
-                  <Box
-                    sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-                  >
+                  {/* Lista de Tarefas em Grid 2x2 */}
+                  <Grid container spacing={2}>
                     {importantTasks.map((task, index) => (
-                      <Draggable
-                        key={task.id}
-                        draggableId={task.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
-                          <Card
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            sx={{
-                              backgroundColor: '#2a2a2a',
-                              border: '2px solid #ff9800',
-                              borderRadius: 2,
-                              position: 'relative',
-                              overflow: 'hidden',
-                              transition: 'all 0.2s ease',
-                              cursor: snapshot.isDragging ? 'grabbing' : 'grab',
-                              opacity: snapshot.isDragging ? 0.8 : 1,
-                              transform: snapshot.isDragging
-                                ? 'rotate(2deg) scale(1.02)'
-                                : 'none',
-                              '&:hover': {
-                                backgroundColor: '#333',
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 4px 12px rgba(255, 152, 0, 0.2)',
-                                borderColor: '#ffb74d',
-                              },
-                              '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: '4px',
-                                background:
-                                  'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)',
-                              },
-                            }}
-                          >
-                            <CardContent sx={{ p: 2 }}>
-                              <Box
+                      <Grid item xs={12} sm={6} key={task.id}>
+                        <Draggable draggableId={task.id} index={index}>
+                          {(provided, snapshot) => (
+                            <Card
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              sx={{
+                                backgroundColor: '#2a2a2a',
+                                border: '2px solid #ff9800',
+                                borderRadius: 2,
+                                position: 'relative',
+                                overflow: 'hidden',
+                                transition: 'all 0.2s ease',
+                                cursor: snapshot.isDragging
+                                  ? 'grabbing'
+                                  : 'grab',
+                                opacity: snapshot.isDragging ? 0.8 : 1,
+                                transform: snapshot.isDragging
+                                  ? 'rotate(2deg) scale(1.02)'
+                                  : 'none',
+                                height: '280px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                '&:hover': {
+                                  backgroundColor: '#333',
+                                  transform: 'translateY(-2px)',
+                                  boxShadow:
+                                    '0 4px 12px rgba(255, 152, 0, 0.2)',
+                                  borderColor: '#ffb74d',
+                                },
+                                '&::before': {
+                                  content: '""',
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  height: '4px',
+                                  background:
+                                    'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)',
+                                },
+                              }}
+                            >
+                              <CardContent
                                 sx={{
+                                  p: 2,
+                                  flex: 1,
                                   display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'flex-start',
-                                  mb: 1,
+                                  flexDirection: 'column',
                                 }}
                               >
                                 <Box
                                   sx={{
                                     display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                    flex: 1,
+                                    justifyContent: 'space-between',
+                                    alignItems: 'flex-start',
+                                    mb: 1,
                                   }}
                                 >
-                                  <Star
+                                  <Box
                                     sx={{
-                                      color: '#ff9800',
-                                      fontSize: '1.4rem',
-                                      filter:
-                                        'drop-shadow(0 0 4px rgba(255, 152, 0, 0.5))',
-                                    }}
-                                  />
-                                  <Typography
-                                    variant="h6"
-                                    sx={{
-                                      color: 'white',
-                                      fontWeight: 'bold',
-                                      textShadow:
-                                        '0 1px 2px rgba(0, 0, 0, 0.3)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 1,
+                                      flex: 1,
                                     }}
                                   >
-                                    {task.title}
-                                  </Typography>
+                                    <Star
+                                      sx={{
+                                        color: '#ff9800',
+                                        fontSize: '1.4rem',
+                                        filter:
+                                          'drop-shadow(0 0 4px rgba(255, 152, 0, 0.5))',
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="h6"
+                                      sx={{
+                                        color: 'white',
+                                        fontWeight: 'bold',
+                                        textShadow:
+                                          '0 1px 2px rgba(0, 0, 0, 0.3)',
+                                        fontSize: '1rem',
+                                        lineHeight: 1.2,
+                                      }}
+                                    >
+                                      {task.title}
+                                    </Typography>
+                                  </Box>
+
+                                  <IconButton
+                                    size="small"
+                                    onClick={(
+                                      e: React.MouseEvent<HTMLElement>
+                                    ) => handleMenuOpen(e, task)}
+                                    sx={{ color: '#b0b0b0' }}
+                                  >
+                                    <Edit fontSize="small" />
+                                  </IconButton>
                                 </Box>
 
-                                <IconButton
-                                  size="small"
-                                  onClick={(e: React.MouseEvent<HTMLElement>) =>
-                                    handleMenuOpen(e, task)
-                                  }
-                                  sx={{ color: '#b0b0b0' }}
-                                >
-                                  <Edit fontSize="small" />
-                                </IconButton>
-                              </Box>
-
-                              {task.description && (
-                                <Box
-                                  sx={{
-                                    color: '#b0b0b0',
-                                    mb: 2,
-                                    '& h1, & h2, & h3, & h4, & h5, & h6': {
-                                      color: '#b0b0b0',
-                                      margin: '4px 0',
-                                      fontSize: '0.875rem',
-                                    },
-                                    '& p': {
-                                      color: '#b0b0b0',
-                                      margin: '2px 0',
-                                      fontSize: '0.875rem',
-                                    },
-                                    '& strong, & b': {
-                                      fontWeight: 'bold',
-                                      color: '#b0b0b0',
-                                    },
-                                    '& em, & i': {
-                                      fontStyle: 'italic',
-                                      color: '#b0b0b0',
-                                    },
-                                    '& u': {
-                                      textDecoration: 'underline',
-                                      color: '#b0b0b0',
-                                    },
-                                    '& s, & strike': {
-                                      textDecoration: 'line-through',
-                                      color: '#b0b0b0',
-                                    },
-                                    '& a': {
-                                      color: '#64b5f6',
-                                      textDecoration: 'underline',
-                                    },
-                                    '& ul, & ol': {
-                                      paddingLeft: '16px',
-                                      color: '#b0b0b0',
-                                    },
-                                    '& li': {
-                                      color: '#b0b0b0',
-                                      margin: '1px 0',
-                                    },
-                                  }}
-                                  dangerouslySetInnerHTML={{
-                                    __html:
-                                      task.description.length > 100
-                                        ? `${task.description.substring(
-                                            0,
-                                            100
-                                          )}...`
-                                        : task.description,
-                                  }}
-                                />
-                              )}
-
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
-                                  mb: 2,
-                                }}
-                              >
-                                <Schedule
-                                  fontSize="small"
-                                  sx={{ color: '#b0b0b0' }}
-                                />
-                                <Typography
-                                  variant="body2"
-                                  sx={{ color: '#b0b0b0' }}
-                                >
-                                  {formatTaskTime(task)}
-                                </Typography>
-                              </Box>
-
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  gap: 1,
-                                  flexWrap: 'wrap',
-                                  mb: 2,
-                                }}
-                              >
-                                <Chip
-                                  label={task.priority}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor:
-                                      priorityColors[task.priority],
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                                  }}
-                                />
-
-                                {task.category && (
-                                  <Chip
-                                    label={task.category}
-                                    size="small"
-                                    variant="outlined"
+                                {task.description && (
+                                  <Box
                                     sx={{
                                       color: '#b0b0b0',
-                                      borderColor: '#555',
+                                      mb: 2,
+                                      flex: 1,
+                                      maxHeight: '90px',
+                                      overflow: 'hidden',
+                                      '& h1, & h2, & h3, & h4, & h5, & h6': {
+                                        color: '#b0b0b0',
+                                        margin: '2px 0',
+                                        fontSize: '0.75rem',
+                                      },
+                                      '& p': {
+                                        color: '#b0b0b0',
+                                        margin: '1px 0',
+                                        fontSize: '0.75rem',
+                                      },
+                                      '& strong, & b': {
+                                        fontWeight: 'bold',
+                                        color: '#b0b0b0',
+                                      },
+                                      '& em, & i': {
+                                        fontStyle: 'italic',
+                                        color: '#b0b0b0',
+                                      },
+                                      '& u': {
+                                        textDecoration: 'underline',
+                                        color: '#b0b0b0',
+                                      },
+                                      '& s, & strike': {
+                                        textDecoration: 'line-through',
+                                        color: '#b0b0b0',
+                                      },
+                                      '& a': {
+                                        color: '#64b5f6',
+                                        textDecoration: 'underline',
+                                      },
+                                      '& ul, & ol': {
+                                        paddingLeft: '12px',
+                                        color: '#b0b0b0',
+                                      },
+                                      '& li': {
+                                        color: '#b0b0b0',
+                                        margin: '1px 0',
+                                      },
+                                    }}
+                                    dangerouslySetInnerHTML={{
+                                      __html:
+                                        task.description.length > 150
+                                          ? `${task.description.substring(
+                                              0,
+                                              150
+                                            )}...`
+                                          : task.description,
                                     }}
                                   />
                                 )}
 
-                                <Chip
-                                  label="⭐ Importante"
-                                  size="small"
+                                <Box
                                   sx={{
-                                    background:
-                                      'linear-gradient(45deg, #ff9800 30%, #ffb74d 90%)',
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    boxShadow:
-                                      '0 2px 8px rgba(255, 152, 0, 0.3)',
-                                    '&:hover': {
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    mb: 2,
+                                  }}
+                                >
+                                  <Schedule
+                                    fontSize="small"
+                                    sx={{ color: '#b0b0b0' }}
+                                  />
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ color: '#b0b0b0' }}
+                                  >
+                                    {formatTaskTime(task)}
+                                  </Typography>
+                                </Box>
+
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    gap: 0.5,
+                                    flexWrap: 'wrap',
+                                    mb: 1.5,
+                                  }}
+                                >
+                                  <Chip
+                                    label={task.priority}
+                                    size="small"
+                                    sx={{
+                                      backgroundColor:
+                                        priorityColors[task.priority],
+                                      color: 'white',
+                                      fontWeight: 'bold',
+                                      fontSize: '0.7rem',
+                                      height: '20px',
+                                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                                    }}
+                                  />
+
+                                  {task.category && (
+                                    <Chip
+                                      label={task.category}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        color: '#b0b0b0',
+                                        borderColor: '#555',
+                                        fontSize: '0.7rem',
+                                        height: '20px',
+                                      }}
+                                    />
+                                  )}
+
+                                  <Chip
+                                    label="⭐"
+                                    size="small"
+                                    sx={{
+                                      background:
+                                        'linear-gradient(45deg, #ff9800 30%, #ffb74d 90%)',
+                                      color: 'white',
+                                      fontWeight: 'bold',
+                                      fontSize: '0.7rem',
+                                      height: '20px',
                                       boxShadow:
-                                        '0 4px 12px rgba(255, 152, 0, 0.4)',
-                                    },
-                                  }}
-                                />
+                                        '0 2px 8px rgba(255, 152, 0, 0.3)',
+                                      '&:hover': {
+                                        boxShadow:
+                                          '0 4px 12px rgba(255, 152, 0, 0.4)',
+                                      },
+                                    }}
+                                  />
 
-                                <Chip
-                                  label={
-                                    task.status === 'todo'
-                                      ? 'Pendente'
-                                      : task.status === 'in_progress'
-                                      ? 'Em Andamento'
-                                      : 'Concluída'
-                                  }
-                                  size="small"
-                                  sx={{
-                                    backgroundColor:
-                                      task.status === 'completed'
-                                        ? '#4caf50'
+                                  <Chip
+                                    label={
+                                      task.status === 'todo'
+                                        ? 'Pendente'
                                         : task.status === 'in_progress'
-                                        ? '#ff9800'
-                                        : '#f44336',
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                  }}
-                                />
-                              </Box>
+                                        ? 'Em Andamento'
+                                        : 'Concluída'
+                                    }
+                                    size="small"
+                                    sx={{
+                                      backgroundColor:
+                                        task.status === 'completed'
+                                          ? '#4caf50'
+                                          : task.status === 'in_progress'
+                                          ? '#ff9800'
+                                          : '#f44336',
+                                      color: 'white',
+                                      fontWeight: 'bold',
+                                      fontSize: '0.7rem',
+                                      height: '20px',
+                                    }}
+                                  />
+                                </Box>
 
-                              <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  startIcon={<CheckCircle />}
-                                  onClick={() => handleCompleteTask(task)}
-                                  disabled={task.status === 'completed'}
-                                  sx={{
-                                    color:
-                                      task.status === 'completed'
-                                        ? '#4caf50'
-                                        : '#1976d2',
-                                    borderColor:
-                                      task.status === 'completed'
-                                        ? '#4caf50'
-                                        : '#1976d2',
-                                    '&:hover': {
+                                <Box
+                                  sx={{ display: 'flex', gap: 1, mt: 'auto' }}
+                                >
+                                  <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<CheckCircle />}
+                                    onClick={() => handleCompleteTask(task)}
+                                    disabled={task.status === 'completed'}
+                                    sx={{
+                                      color:
+                                        task.status === 'completed'
+                                          ? '#4caf50'
+                                          : '#1976d2',
                                       borderColor:
                                         task.status === 'completed'
                                           ? '#4caf50'
-                                          : '#1565c0',
-                                    },
-                                  }}
-                                >
-                                  {task.status === 'completed'
-                                    ? 'Concluída'
-                                    : 'Concluir'}
-                                </Button>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </Draggable>
+                                          : '#1976d2',
+                                      fontSize: '0.75rem',
+                                      py: 0.5,
+                                      '&:hover': {
+                                        borderColor:
+                                          task.status === 'completed'
+                                            ? '#4caf50'
+                                            : '#1565c0',
+                                      },
+                                    }}
+                                  >
+                                    {task.status === 'completed'
+                                      ? 'Concluída'
+                                      : 'Concluir'}
+                                  </Button>
+                                </Box>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </Draggable>
+                      </Grid>
                     ))}
                     {provided.placeholder}
-                  </Box>
+                  </Grid>
                 </Box>
               )}
             </Droppable>

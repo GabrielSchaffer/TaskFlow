@@ -435,6 +435,9 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
                                     onClick={() => handlePreviewTask(task)}
                                     sx={{
                                       mb: 2,
+                                      height: '280px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
                                       cursor: snapshot.isDragging
                                         ? 'grabbing'
                                         : 'pointer',
@@ -462,7 +465,14 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
                                       }),
                                     }}
                                   >
-                                    <CardContent sx={{ p: 2.5 }}>
+                                    <CardContent
+                                      sx={{
+                                        p: 2.5,
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                      }}
+                                    >
                                       {/* Header com título e menu */}
                                       <Box
                                         display="flex"
