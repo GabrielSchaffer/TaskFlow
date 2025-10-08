@@ -749,7 +749,15 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                 important: editingTask.important,
                 status: editingTask.status,
               }
-            : undefined
+            : {
+                title: '',
+                description: '',
+                due_date: new Date().toISOString(),
+                priority: 'Média' as const,
+                category: '',
+                important: false,
+                status: 'todo' as const,
+              }
         }
       />
 

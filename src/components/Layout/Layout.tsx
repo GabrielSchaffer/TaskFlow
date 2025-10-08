@@ -16,6 +16,11 @@ export const Layout = ({ children }: LayoutProps) => {
     setShowTaskForm(true);
   };
 
+  const handleTaskUpdated = () => {
+    // Forçar atualização da página para mostrar a nova tarefa
+    window.location.reload();
+  };
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       {/* Sidebar */}
@@ -34,6 +39,16 @@ export const Layout = ({ children }: LayoutProps) => {
         open={showTaskForm}
         onClose={() => setShowTaskForm(false)}
         userId={user?.id || ''}
+        onTaskUpdated={handleTaskUpdated}
+        initialData={{
+          title: '',
+          description: '',
+          due_date: new Date().toISOString(),
+          priority: 'Média' as const,
+          category: '',
+          important: false,
+          status: 'todo' as const,
+        }}
       />
     </Box>
   );

@@ -18,7 +18,7 @@ type ViewMode = 'kanban' | 'calendar' | 'list';
 
 export const TasksPage = () => {
   const { user } = useAuth();
-  const { tasks, loading } = useTasks(user?.id || '');
+  const { tasks, loading, createTask, updateTask, deleteTask, forceRefresh } = useTasks(user?.id || '');
 
   // Função para obter o modo de visualização do localStorage ou usar o padrão
   const getInitialViewMode = (): ViewMode => {
@@ -34,6 +34,14 @@ export const TasksPage = () => {
 
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
   const [showTaskForm, setShowTaskForm] = useState(false);
+
+  // Função para forçar atualização quando tarefa é criada
+  const handleTaskCreated = () => {
+    console.log('✅ Nova tarefa criada - atualizando lista');
+    // Força refresh completo
+    forceRefresh();
+    setShowTaskForm(false);
+  };
 
   const handleViewModeChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -247,6 +255,7 @@ export const TasksPage = () => {
         open={showTaskForm}
         onClose={() => setShowTaskForm(false)}
         userId={user?.id || ''}
+        onTaskUpdated={handleTaskCreated}
       />
     </Box>
   );
