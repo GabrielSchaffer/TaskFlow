@@ -59,8 +59,10 @@ export const DashboardPage = () => {
         minHeight: '100vh',
         background:
           'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)',
-        p: 4,
+        p: { xs: 2, sm: 3, md: 4 }, // Padding responsivo
         position: 'relative',
+        width: '100%',
+        overflow: 'hidden', // Evita overflow horizontal
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -300,7 +302,7 @@ export const DashboardPage = () => {
       {/* Cards de Estatísticas - Design Moderno */}
       <Grid
         container
-        spacing={4}
+        spacing={{ xs: 2, sm: 3, md: 4 }} // Spacing responsivo
         sx={{ mb: 4, position: 'relative', zIndex: 1 }}
       >
         <Grid item xs={12} sm={6} md={3}>

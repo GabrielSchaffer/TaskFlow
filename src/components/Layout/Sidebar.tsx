@@ -50,6 +50,8 @@ import dayjs from 'dayjs';
 
 interface SidebarProps {
   onNewTask: () => void;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 const menuItems = [
@@ -75,7 +77,57 @@ const menuItems = [
   },
 ];
 
-export const Sidebar = ({ onNewTask }: SidebarProps) => {
+export const Sidebar = ({ onNewTask, open = true, onClose }: SidebarProps) => {
+  const { colorTheme } = useTheme();
+
+  return (
+    <>
+      {/* Desktop Sidebar - Permanent */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', sm: 'block' }, // Apenas em desktop
+          width: 280,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: 280,
+            boxSizing: 'border-box',
+            background: colorTheme.sidebarGradient,
+            color: 'white',
+            border: 'none',
+          },
+        }}
+      >
+        <SidebarContent onNewTask={onNewTask} />
+      </Drawer>
+
+      {/* Mobile Sidebar - Temporary */}
+      <Drawer
+        variant="temporary"
+        open={open}
+        onClose={onClose}
+        sx={{
+          display: { xs: 'block', sm: 'none' }, // Apenas em mobile
+          '& .MuiDrawer-paper': {
+            width: 280,
+            boxSizing: 'border-box',
+            background: colorTheme.sidebarGradient,
+            color: 'white',
+            border: 'none',
+          },
+        }}
+        ModalProps={{
+          keepMounted: true, // Melhora performance em mobile
+        }}
+      >
+        <SidebarContent onNewTask={onNewTask} />
+      </Drawer>
+    </>
+  );
+};
+
+// Componente separado para o conteúdo da sidebar
+const SidebarContent = ({ onNewTask }: { onNewTask: () => void }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -132,20 +184,7 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
   };
 
   return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: 280,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: 280,
-          boxSizing: 'border-box',
-          background: colorTheme.sidebarGradient,
-          color: 'white',
-          border: 'none',
-        },
-      }}
-    >
+    <>
       <Box sx={{ p: 1 }}>
         <Box
           component="img"
@@ -949,6 +988,6 @@ export const Sidebar = ({ onNewTask }: SidebarProps) => {
           )} */}
         </DialogActions>
       </Dialog>
-    </Drawer>
+    </>
   );
 };

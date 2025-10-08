@@ -181,9 +181,15 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
   }
 
   return (
-    <Box sx={{ backgroundColor: '#121212', minHeight: '100vh', p: 3 }}>
+    <Box sx={{ 
+      backgroundColor: '#121212', 
+      minHeight: '100vh', 
+      p: { xs: 1, sm: 2, md: 3 }, // Padding responsivo
+      width: '100%',
+      overflow: 'hidden', // Evita overflow horizontal
+    }}>
       {/* Cards de Etapas */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={4}>
           <Card
             sx={{
@@ -376,9 +382,14 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
       ) : (
         <TableContainer
           component={Paper}
-          sx={{ backgroundColor: '#1e1e1e', border: '1px solid #333' }}
+          sx={{ 
+            backgroundColor: '#1e1e1e', 
+            border: '1px solid #333',
+            overflow: 'auto', // Permite scroll horizontal se necessário
+            width: '100%',
+          }}
         >
-          <Table>
+          <Table sx={{ minWidth: { xs: 600, sm: 800 } }}> {/* Largura mínima responsiva */}
             <TableHead>
               <TableRow>
                 <TableCell
@@ -386,6 +397,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                     color: '#e0e0e0',
                     fontWeight: 600,
                     borderColor: '#333',
+                    minWidth: { xs: 120, sm: 150 }, // Largura mínima responsiva
                   }}
                 >
                   Tarefa
@@ -395,6 +407,8 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                     color: '#e0e0e0',
                     fontWeight: 600,
                     borderColor: '#333',
+                    display: { xs: 'none', sm: 'table-cell' }, // Escondido em mobile
+                    minWidth: 200,
                   }}
                 >
                   Descrição
@@ -404,6 +418,8 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                     color: '#e0e0e0',
                     fontWeight: 600,
                     borderColor: '#333',
+                    display: { xs: 'none', md: 'table-cell' }, // Escondido em mobile e tablet
+                    minWidth: 100,
                   }}
                 >
                   Categoria
@@ -413,6 +429,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                     color: '#e0e0e0',
                     fontWeight: 600,
                     borderColor: '#333',
+                    minWidth: 80,
                   }}
                 >
                   Prioridade
@@ -422,6 +439,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                     color: '#e0e0e0',
                     fontWeight: 600,
                     borderColor: '#333',
+                    minWidth: 100,
                   }}
                 >
                   Etapa
@@ -431,6 +449,8 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                     color: '#e0e0e0',
                     fontWeight: 600,
                     borderColor: '#333',
+                    display: { xs: 'none', sm: 'table-cell' }, // Escondido em mobile
+                    minWidth: 100,
                   }}
                 >
                   Data
@@ -440,6 +460,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                     color: '#e0e0e0',
                     fontWeight: 600,
                     borderColor: '#333',
+                    minWidth: 80,
                   }}
                 >
                   Ações
@@ -494,7 +515,10 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                   </TableCell>
 
                   {/* Descrição da Tarefa */}
-                  <TableCell sx={{ borderColor: '#333' }}>
+                  <TableCell sx={{ 
+                    borderColor: '#333',
+                    display: { xs: 'none', sm: 'table-cell' }, // Escondido em mobile
+                  }}>
                     {task.description ? (
                       <Box
                         sx={{
@@ -564,7 +588,10 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                   </TableCell>
 
                   {/* Categoria */}
-                  <TableCell sx={{ borderColor: '#333' }}>
+                  <TableCell sx={{ 
+                    borderColor: '#333',
+                    display: { xs: 'none', md: 'table-cell' }, // Escondido em mobile e tablet
+                  }}>
                     {task.category && (
                       <Chip
                         label={task.category}
@@ -617,7 +644,10 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
                   </TableCell>
 
                   {/* Data */}
-                  <TableCell sx={{ borderColor: '#333' }}>
+                  <TableCell sx={{ 
+                    borderColor: '#333',
+                    display: { xs: 'none', sm: 'table-cell' }, // Escondido em mobile
+                  }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Schedule fontSize="small" sx={{ color: '#b0b0b0' }} />
                       <Typography

@@ -34,6 +34,8 @@ import {
   PlayCircleOutline,
   DoneAll,
   Add,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { Task, TaskStatus } from '../../types';
 import { TaskPreview } from '../Tasks/TaskPreview';
@@ -86,10 +88,25 @@ export const KanbanBoard = ({
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  
+  // Estado para controlar visibilidade das colunas
+  const [columnVisibility, setColumnVisibility] = useState({
+    todo: true,
+    in_progress: true,
+    completed: true,
+  });
 
   // Função para obter tarefas por status
   const getTasksByStatus = (status: string) => {
     return tasks.filter(task => task.status === status);
+  };
+
+  // Função para alternar visibilidade da coluna
+  const toggleColumnVisibility = (status: string) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [status]: !prev[status as keyof typeof prev]
+    }));
   };
 
   // Função para lidar com drag and drop
@@ -303,28 +320,57 @@ export const KanbanBoard = ({
                       borderBottom: '1px solid #333',
                       backgroundColor: config.color,
                       background: `linear-gradient(135deg, ${config.color} 0%, ${config.color}dd 100%)`,
+                      cursor: 'pointer',
+                      '&:hover': {
+                        background: `linear-gradient(135deg, ${config.color} 0%, ${config.color}cc 100%)`,
+                      },
+                      transition: 'all 0.2s ease',
                     }}
+                    onClick={() => toggleColumnVisibility(status)}
                   >
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: { xs: 0.5, sm: 1 }, // Gap responsivo
+                        justifyContent: 'space-between',
                         mb: 1,
-                        flexWrap: 'wrap', // Permite quebra de linha se necessário
                       }}
                     >
-                      {config.icon}
-                      <Typography
-                        variant="h6"
-                        sx={{ 
-                          color: 'white', 
-                          fontWeight: 'bold',
-                          fontSize: { xs: '1rem', sm: '1.25rem' }, // Tamanho responsivo
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: { xs: 0.5, sm: 1 }, // Gap responsivo
+                          flexWrap: 'wrap', // Permite quebra de linha se necessário
                         }}
                       >
-                        {config.title}
-                      </Typography>
+                        {config.icon}
+                        <Typography
+                          variant="h6"
+                          sx={{ 
+                            color: 'white', 
+                            fontWeight: 'bold',
+                            fontSize: { xs: '1rem', sm: '1.25rem' }, // Tamanho responsivo
+                          }}
+                        >
+                          {config.title}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          },
+                        }}
+                      >
+                        {columnVisibility[status as keyof typeof columnVisibility] ? (
+                          <ExpandLess />
+                        ) : (
+                          <ExpandMore />
+                        )}
+                      </IconButton>
                     </Box>
                     <Typography
                       variant="body2"
@@ -337,22 +383,23 @@ export const KanbanBoard = ({
                     </Typography>
                   </Box>
 
-                  <Droppable droppableId={status}>
-                    {(provided: any, snapshot: any) => (
-                      <Box
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        sx={{
-                          flex: 1,
-                          p: { xs: 1, sm: 2 }, // Padding responsivo
-                          minHeight: { xs: '150px', sm: '200px' }, // Altura mínima responsiva
-                          backgroundColor: snapshot.isDraggingOver
-                            ? '#2a2a2a'
-                            : 'transparent',
-                          transition: 'background-color 0.2s ease',
-                          overflow: 'auto', // Permite scroll se necessário
-                        }}
-                      >
+                  {columnVisibility[status as keyof typeof columnVisibility] && (
+                    <Droppable droppableId={status}>
+                      {(provided: any, snapshot: any) => (
+                        <Box
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          sx={{
+                            flex: 1,
+                            p: { xs: 1, sm: 2 }, // Padding responsivo
+                            minHeight: { xs: '150px', sm: '200px' }, // Altura mínima responsiva
+                            backgroundColor: snapshot.isDraggingOver
+                              ? '#2a2a2a'
+                              : 'transparent',
+                            transition: 'background-color 0.2s ease',
+                            overflow: 'auto', // Permite scroll se necessário
+                          }}
+                        >
                         {getTasksByStatus(status).length === 0 ? (
                           <Box
                             sx={{
@@ -521,36 +568,21 @@ export const KanbanBoard = ({
                                           wordBreak: 'break-word', // Quebra palavras longas
                                         }}
                                       >
-                                        {/* Remove HTML tags and show only text */}
+                                        {/* Remove HTML tags and entities, show only text */}
                                         {task.description
                                           .replace(/<[^>]*>/g, '') // Remove all HTML tags
+                                          .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+                                          .replace(/&amp;/g, '&') // Replace &amp; with &
+                                          .replace(/&lt;/g, '<') // Replace &lt; with <
+                                          .replace(/&gt;/g, '>') // Replace &gt; with >
+                                          .replace(/&quot;/g, '"') // Replace &quot; with "
+                                          .replace(/&#39;/g, "'") // Replace &#39; with '
                                           .substring(0, 80) // Limite fixo mais conservador
                                           .trim()}
-                                        {task.description.replace(/<[^>]*>/g, '').length > 80 && '...'}
+                                        {task.description.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').length > 80 && '...'}
                                       </Box>
                                     )}
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: { xs: 0.5, sm: 1 }, // Gap responsivo
-                                        mb: { xs: 1.5, sm: 2 }, // Margin responsivo
-                                      }}
-                                    >
-                                      <Schedule
-                                        fontSize="small"
-                                        sx={{ color: '#b0b0b0' }}
-                                      />
-                                      <Typography
-                                        variant="body2"
-                                        sx={{ 
-                                          color: '#b0b0b0',
-                                          fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Tamanho responsivo
-                                        }}
-                                      >
-                                        {formatTaskTime(task)}
-                                      </Typography>
-                                    </Box>
+                                   
                                     <Box
                                       sx={{
                                         display: 'flex',
@@ -586,16 +618,19 @@ export const KanbanBoard = ({
                                       )}
 
                                       {task.important && (
-                                        <Chip
-                                          label="Importante"
-                                          size="small"
+                                        <Box
                                           sx={{
-                                            backgroundColor: '#ff9800',
-                                            color: 'white',
-                                            fontSize: { xs: '0.7rem', sm: '0.75rem' }, // Tamanho responsivo
-                                            height: { xs: 20, sm: 24 }, // Altura responsiva
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            borderRadius: '50%',
+                                            width: { xs: 24, sm: 28 },
+                                            height: { xs: 20, sm: 24 },
+                                            fontSize: { xs: '0.9rem', sm: '1rem' },
                                           }}
-                                        />
+                                        >
+                                          ⭐
+                                        </Box>
                                       )}
                                     </Box>
                                   </CardContent>
@@ -605,9 +640,10 @@ export const KanbanBoard = ({
                           ))
                         )}
                         {provided.placeholder}
-                      </Box>
-                    )}
-                  </Droppable>
+                        </Box>
+                      )}
+                    </Droppable>
+                  )}
                 </Card>
               </Box>
             ))}
