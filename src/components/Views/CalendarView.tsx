@@ -11,8 +11,13 @@ import {
   Chip,
   Alert,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Add, ChevronLeft, ChevronRight, Today } from '@mui/icons-material';
 // Removido react-beautiful-dnd devido a problemas de compatibilidade
 import { Task } from '../../types';
 import { useTasks } from '../../hooks/useTasks';
@@ -45,7 +50,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
-  const [currentDate] = useState(dayjs());
+  const [currentDate, setCurrentDate] = useState(dayjs()); // Agora é dinâmico
   const [showNewTask, setShowNewTask] = useState(false);
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(dayjs());
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
@@ -53,6 +58,11 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [mouseStartPosition, setMouseStartPosition] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
+  const [showTasksModal, setShowTasksModal] = useState(false);
+  const [selectedDayTasks, setSelectedDayTasks] = useState<Task[]>([]);
+  const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs | null>(null);
 
   // Sincronizar estado local com as tarefas
   useEffect(() => {
@@ -70,6 +80,31 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
     }
   };
 
+  const handleShowAllTasks = (day: dayjs.Dayjs, dayTasks: Task[]) => {
+    setSelectedDay(day);
+    setSelectedDayTasks(dayTasks);
+    setShowTasksModal(true);
+  };
+
+  const handleCloseTasksModal = () => {
+    setShowTasksModal(false);
+    setSelectedDay(null);
+    setSelectedDayTasks([]);
+  };
+
+  // Funções de navegação do calendário
+  const goToPreviousMonth = () => {
+    setCurrentDate(prev => prev.subtract(1, 'month'));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(prev => prev.add(1, 'month'));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(dayjs());
+  };
+
   // Funções para drag and drop customizado
   const handleMouseDown = (e: React.MouseEvent, task: Task) => {
     e.preventDefault();
@@ -83,54 +118,80 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
     const offsetY = e.clientY - rect.top;
 
     setDraggedTask(task);
-    setIsDragging(true);
     setMousePosition({ x: e.clientX, y: e.clientY });
+    setMouseStartPosition({ x: e.clientX, y: e.clientY }); // Posição inicial
     setDragOffset({ x: offsetX, y: offsetY });
+    setHasMoved(false); // Reset movimento
+    // NÃO setamos isDragging ainda - só após movimento significativo
 
     console.log('States updated:', {
-      isDragging: true,
       draggedTask: task.title,
       offset: { x: offsetX, y: offsetY },
+      startPosition: { x: e.clientX, y: e.clientY },
     });
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging && draggedTask) {
+    if (draggedTask) {
       e.preventDefault();
-      setMousePosition({ x: e.clientX, y: e.clientY });
 
-      // Verificar se está sobre um dia do calendário
-      const element = document.elementFromPoint(e.clientX, e.clientY);
-      if (element) {
-        const dayElement = element.closest('[data-day]');
-        if (dayElement) {
-          const dayString = dayElement.getAttribute('data-day');
-          if (dayString) {
-            const day = dayjs(dayString);
-            setDragOverDate(day);
+      // Calcular distância do movimento
+      const deltaX = Math.abs(e.clientX - mouseStartPosition.x);
+      const deltaY = Math.abs(e.clientY - mouseStartPosition.y);
+      const moveDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+      // Se moveu mais de 5 pixels, considera como drag
+      if (moveDistance > 5 && !isDragging) {
+        setIsDragging(true);
+        setHasMoved(true);
+        console.log('Movimento detectado - iniciando drag');
+      }
+
+      if (isDragging) {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+
+        // Verificar se está sobre um dia do calendário
+        const element = document.elementFromPoint(e.clientX, e.clientY);
+        if (element) {
+          const dayElement = element.closest('[data-day]');
+          if (dayElement) {
+            const dayString = dayElement.getAttribute('data-day');
+            if (dayString) {
+              const day = dayjs(dayString);
+              setDragOverDate(day);
+            }
+          } else {
+            setDragOverDate(null);
           }
-        } else {
-          setDragOverDate(null);
         }
       }
     }
   };
 
   const handleMouseUp = async (e: MouseEvent) => {
-    if (isDragging && draggedTask && dragOverDate) {
-      // Atualizar a data da tarefa
-      const updatedTask = {
-        ...draggedTask,
-        due_date: dragOverDate.toISOString(),
-      };
+    if (draggedTask) {
+      if (isDragging && dragOverDate) {
+        // Foi um drag real - atualizar a data da tarefa
+        const updatedTask = {
+          ...draggedTask,
+          due_date: dragOverDate.toISOString(),
+        };
 
-      // Atualizar estado local imediatamente
-      setLocalTasks(prevTasks =>
-        prevTasks.map(task => (task.id === draggedTask.id ? updatedTask : task))
-      );
+        // Atualizar estado local imediatamente
+        setLocalTasks(prevTasks =>
+          prevTasks.map(task =>
+            task.id === draggedTask.id ? updatedTask : task
+          )
+        );
 
-      // Atualizar no banco de dados
-      await updateTask(draggedTask.id, updatedTask);
+        // Atualizar no banco de dados
+        await updateTask(draggedTask.id, updatedTask);
+        console.log('Tarefa movida para:', dragOverDate.format('DD/MM/YYYY'));
+      } else if (!hasMoved) {
+        // Foi um clique simples (sem movimento) - abrir preview
+        console.log('Clique simples detectado - abrindo preview');
+        handlePreviewTask(draggedTask);
+      }
     }
 
     // Limpar estados imediatamente
@@ -139,11 +200,14 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
     setIsDragging(false);
     setMousePosition({ x: 0, y: 0 });
     setDragOffset({ x: 0, y: 0 });
+    setMouseStartPosition({ x: 0, y: 0 });
+    setHasMoved(false);
   };
 
-  // Listener para capturar movimento do mouse durante drag
+  // Listener para capturar movimento do mouse durante possível drag
   useEffect(() => {
-    if (isDragging) {
+    if (draggedTask) {
+      // Escuta se tem tarefa selecionada (não apenas se isDragging)
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none'; // Prevenir seleção de texto
@@ -154,7 +218,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'auto';
     };
-  }, [isDragging, draggedTask, dragOverDate]);
+  }, [draggedTask, isDragging, dragOverDate]); // Dependências atualizadas
 
   const getTasksForDate = (date: dayjs.Dayjs) => {
     return localTasks.filter(task => {
@@ -165,9 +229,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
 
   const handleDateChange = (newDate: dayjs.Dayjs | null) => {
     setSelectedDate(newDate);
-    if (newDate) {
-      setShowNewTask(true);
-    }
+    // Removido: setShowNewTask(true) - apenas seleciona o dia para mostrar tarefas
   };
 
   const getCalendarDays = () => {
@@ -198,6 +260,21 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
   const formatTaskTime = (task: Task) => {
     const taskDate = dayjs(task.due_date);
     return taskDate.format('HH:mm');
+  };
+
+  // Função para verificar se uma tarefa está vencida
+  const isTaskOverdue = (task: Task) => {
+    const taskDate = dayjs(task.due_date);
+    const today = dayjs();
+    return taskDate.isBefore(today, 'day') && task.status !== 'completed';
+  };
+
+  // Função para obter a cor da tarefa baseada no status
+  const getTaskColor = (task: Task) => {
+    if (isTaskOverdue(task)) {
+      return '#d32f2f'; // Vermelho para tarefas vencidas
+    }
+    return priorityColors[task.priority];
   };
 
   if (loading) {
@@ -231,7 +308,110 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
   }
 
   return (
-    <Box sx={{ p: 3, backgroundColor: '#121212', minHeight: '100vh' }}>
+    <Box
+      sx={{
+        p: { xs: 0.5, sm: 2, md: 3 }, // Padding responsivo - muito menor no mobile
+        backgroundColor: '#121212',
+        minHeight: '100vh',
+        width: '100%',
+        overflow: 'hidden', // Evita overflow horizontal
+      }}
+    >
+      {/* Header de Navegação do Calendário */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row', // Sempre em linha
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: { xs: 1, sm: 2 }, // Gap menor em mobile
+          mb: { xs: "4px", sm: 1 }, // Margin bottom responsivo - menor no mobile
+          p: { xs: 1, sm: 2 }, // Padding responsivo
+          backgroundColor: '#1e1e1e',
+          borderRadius: 2,
+          border: '1px solid #333',
+        }}
+      >
+        {/* Botão Mês Anterior */}
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={goToPreviousMonth}
+          sx={{
+            minWidth: { xs: '32px', sm: '40px' }, // Menor em mobile
+            height: { xs: '32px', sm: '36px' }, // Altura responsiva
+            color: '#e0e0e0',
+            borderColor: '#555',
+            '&:hover': {
+              borderColor: '#777',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            },
+          }}
+        >
+          <ChevronLeft sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
+        </Button>
+
+        {/* Mês e Ano Atual + Botão Hoje */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          mb: 0,
+          gap: { xs: 1, sm: 1 },
+          flex: 1,
+          justifyContent: 'center'
+        }}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: 'white',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fontSize: { xs: '1rem', sm: '1.5rem' }, // Fonte menor em mobile
+              minWidth: { xs: '120px', sm: '200px' }, // Largura menor em mobile
+            }}
+          >
+            {currentDate.format('MMMM YYYY')}
+          </Typography>
+
+          <Button
+            variant="contained"
+            size="small"
+            onClick={goToToday}
+            startIcon={<Today sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
+            sx={{
+              backgroundColor: '#1976d2',
+              fontSize: { xs: '0.7rem', sm: '0.875rem' }, // Fonte menor em mobile
+              px: { xs: 1, sm: 2 }, // Padding horizontal responsivo
+              py: { xs: 0.5, sm: 1 }, // Padding vertical responsivo
+              '&:hover': {
+                backgroundColor: '#1565c0',
+              },
+            }}
+          >
+            Hoje
+          </Button>
+        </Box>
+
+        {/* Botão Próximo Mês */}
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={goToNextMonth}
+          sx={{
+            minWidth: { xs: '32px', sm: '40px' }, // Menor em mobile
+            height: { xs: '32px', sm: '36px' }, // Altura responsiva
+            color: '#e0e0e0',
+            borderColor: '#555',
+            '&:hover': {
+              borderColor: '#777',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            },
+          }}
+        >
+          <ChevronRight sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
+        </Button>
+      </Box>
+
       {/* Calendário Grid */}
       <Paper
         sx={{
@@ -247,7 +427,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
             <Grid item xs key={day}>
               <Box
                 sx={{
-                  p: 2,
+                  p: { xs: 1, sm: 2 }, // Padding responsivo
                   textAlign: 'center',
                   fontWeight: 'bold',
                   color: '#b0b0b0',
@@ -256,7 +436,25 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                   backgroundColor: '#2a2a2a',
                 }}
               >
-                <Typography variant="body2">{day}</Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: { xs: '0.7rem', sm: '0.875rem' }, // Tamanho responsivo
+                    display: { xs: 'none', sm: 'block' }, // Escondido em mobile
+                  }}
+                >
+                  {day}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: '0.7rem',
+                    display: { xs: 'block', sm: 'none' }, // Mostrado apenas em mobile
+                  }}
+                >
+                  {day.substring(0, 3)}{' '}
+                  {/* Apenas as 3 primeiras letras em mobile */}
+                </Typography>
               </Box>
             </Grid>
           ))}
@@ -276,8 +474,10 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                   <Box
                     data-day={day.format('YYYY-MM-DD')}
                     sx={{
-                      minHeight: 160,
-                      p: 1,
+                      height: { xs: 100, sm: 120, md: 140 }, // Altura responsiva reduzida
+                      maxHeight: { xs: 100, sm: 120, md: 140 }, // Max height responsivo reduzido
+                      p: { xs: 0.3, sm: 0.5, md: 1 }, // Padding responsivo
+                      minHeight: { xs: 100, sm: 120, md: 140 }, // Altura mínima para consistência
                       border: '1px solid',
                       borderColor: dragOverDate?.isSame(day, 'day')
                         ? '#4caf50'
@@ -308,6 +508,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                       flexDirection: 'column',
                       transition: 'all 0.2s ease',
                       userSelect: 'none',
+                      overflow: 'hidden', // Esconde conteúdo que extrapola
                       '&:hover': {
                         backgroundColor: isCurrentDay
                           ? '#1565c0'
@@ -326,7 +527,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                         borderWidth: '2px',
                       }),
                     }}
-                    onClick={() => handleDateChange(day)}
+                    onClick={() => setSelectedDate(day)} // Mostra tarefas do dia na seção inferior
                   >
                     {/* Número do Dia */}
                     <Box
@@ -341,7 +542,11 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                         variant="body2"
                         sx={{
                           fontWeight: isCurrentDay ? 'bold' : 'normal',
-                          fontSize: isCurrentDay ? '1.1rem' : '0.9rem',
+                          fontSize: {
+                            xs: '0.8rem',
+                            sm: '0.9rem',
+                            md: isCurrentDay ? '1.1rem' : '0.9rem',
+                          }, // Fonte responsiva
                         }}
                       >
                         {day.format('D')}
@@ -350,8 +555,8 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                       {isCurrentDay && (
                         <Box
                           sx={{
-                            width: 8,
-                            height: 8,
+                            width: { xs: 6, sm: 8 }, // Tamanho responsivo
+                            height: { xs: 6, sm: 8 }, // Tamanho responsivo
                             borderRadius: '50%',
                             backgroundColor: '#42a5f5',
                           }}
@@ -359,16 +564,15 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                       )}
                     </Box>
 
-                    {/* Tarefas do dia - Grid 3x3 */}
+                    {/* Tarefas do dia - Container com altura responsiva */}
                     <Box
                       sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gridTemplateRows: 'repeat(3, 1fr)',
-                        gap: 0.3,
                         flex: 1,
-                        minHeight: '90px',
-                        overflow: 'hidden',
+                        maxHeight: { xs: '60px', sm: '80px', md: '100px' }, // Altura máxima responsiva reduzida
+                        overflow: 'hidden', // Esconde overflow
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '100%', // Garante que o container use toda a largura
                       }}
                     >
                       {/* Indicador de drop com card */}
@@ -458,188 +662,69 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                       )}
 
                       {dayTasks.length > 0 && (
-                        <Box>
-                          {/* Layout adaptativo baseado na quantidade de tarefas */}
-                          {dayTasks.length <= 3 ? (
-                            // Layout em linha para 1-3 tarefas
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 0.5,
-                                flex: 1,
-                              }}
-                            >
-                              {dayTasks.map((task, index) => (
+                        <Box
+                          sx={{
+                            height: '100%',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.3,
+                          }}
+                        >
+                          {/* Layout: no mobile mostra apenas "X tarefas", no desktop mostra cards individuais */}
+                          {window.innerWidth >= 600 ? (
+                            // Desktop: mostra cards individuais
+                            <>
+                              {dayTasks.length <= 3 ? (
+                                // Se 3 ou menos tarefas, mostra todas
                                 <Box
-                                  key={task.id}
-                                  onMouseDown={e => handleMouseDown(e, task)}
                                   sx={{
-                                    backgroundColor:
-                                      priorityColors[task.priority],
-                                    color: 'white',
-                                    borderRadius: 1,
-                                    p: 0.5,
-                                    fontSize: '0.7rem',
-                                    cursor:
-                                      isDragging && draggedTask?.id === task.id
-                                        ? 'grabbing'
-                                        : 'grab',
                                     display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    minHeight: '24px',
-                                    position:
-                                      isDragging && draggedTask?.id === task.id
-                                        ? 'fixed'
-                                        : 'relative',
-                                    zIndex:
-                                      isDragging && draggedTask?.id === task.id
-                                        ? 9999
-                                        : 'auto',
-                                    transform:
-                                      isDragging && draggedTask?.id === task.id
-                                        ? `translate(${
-                                            mousePosition.x - dragOffset.x
-                                          }px, ${
-                                            mousePosition.y - dragOffset.y
-                                          }px) rotate(2deg) scale(1.05)`
-                                        : 'none',
-                                    opacity:
-                                      isDragging && draggedTask?.id === task.id
-                                        ? 0.8
-                                        : 1,
-                                    boxShadow:
-                                      isDragging && draggedTask?.id === task.id
-                                        ? '0 8px 25px rgba(0, 0, 0, 0.3)'
-                                        : 'none',
-                                    '&:hover': {
-                                      opacity: 0.8,
-                                      transform:
-                                        isDragging &&
-                                        draggedTask?.id === task.id
-                                          ? `translate(${
-                                              mousePosition.x - dragOffset.x
-                                            }px, ${
-                                              mousePosition.y - dragOffset.y
-                                            }px) rotate(2deg) scale(1.05)`
-                                          : 'scale(1.02)',
-                                    },
+                                    flexDirection: 'column',
+                                    gap: 0.3,
+                                    height: '100%',
+                                    overflow: 'hidden',
+                                    width: '100%',
                                   }}
                                 >
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 0.5,
-                                      flex: 1,
-                                    }}
-                                  >
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        fontWeight: 'bold',
-                                        fontSize: '0.65rem',
-                                        lineHeight: 1,
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        flex: 1,
+                                  {dayTasks.map((task, index) => (
+                                    <Box
+                                      key={task.id}
+                                      onMouseDown={e =>
+                                        handleMouseDown(e, task)
+                                      }
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        handlePreviewTask(task);
                                       }}
-                                    >
-                                      {task.title.length > 12
-                                        ? `${task.title.substring(0, 12)}...`
-                                        : task.title}
-                                    </Typography>
-                                    {task.important && (
-                                      <Typography sx={{ fontSize: '0.6rem' }}>
-                                        ⭐
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                  <Typography
-                                    variant="caption"
-                                    sx={{
-                                      fontSize: '0.6rem',
-                                      opacity: 0.8,
-                                      ml: 0.5,
-                                    }}
-                                  >
-                                    {formatTaskTime(task)}
-                                  </Typography>
-                                </Box>
-                              ))}
-                            </Box>
-                          ) : (
-                            // Layout em grid para 4+ tarefas
-                            <Box
-                              sx={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gridTemplateRows: 'repeat(3, 1fr)',
-                                gap: 0.3,
-                                flex: 1,
-                                minHeight: '90px',
-                                overflow: 'hidden',
-                              }}
-                            >
-                              {dayTasks.slice(0, 9).map((task, index) => (
-                                <Tooltip
-                                  key={task.id}
-                                  title={`${task.title} - ${
-                                    task.description || 'Sem descrição'
-                                  }`}
-                                >
-                                  <Box
-                                    onMouseDown={e => handleMouseDown(e, task)}
-                                    sx={{
-                                      backgroundColor:
-                                        priorityColors[task.priority],
-                                      color: 'white',
-                                      borderRadius: 1,
-                                      p: 0.3,
-                                      fontSize: '0.6rem',
-                                      cursor:
-                                        isDragging &&
-                                        draggedTask?.id === task.id
-                                          ? 'grabbing'
-                                          : 'grab',
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      minHeight: '20px',
-                                      position:
-                                        isDragging &&
-                                        draggedTask?.id === task.id
-                                          ? 'fixed'
-                                          : 'relative',
-                                      zIndex:
-                                        isDragging &&
-                                        draggedTask?.id === task.id
-                                          ? 9999
-                                          : 'auto',
-                                      transform:
-                                        isDragging &&
-                                        draggedTask?.id === task.id
-                                          ? `translate(${
-                                              mousePosition.x - dragOffset.x
-                                            }px, ${
-                                              mousePosition.y - dragOffset.y
-                                            }px) rotate(2deg) scale(1.05)`
-                                          : 'none',
-                                      opacity:
-                                        isDragging &&
-                                        draggedTask?.id === task.id
-                                          ? 0.8
-                                          : 1,
-                                      boxShadow:
-                                        isDragging &&
-                                        draggedTask?.id === task.id
-                                          ? '0 8px 25px rgba(0, 0, 0, 0.3)'
-                                          : 'none',
-                                      '&:hover': {
-                                        opacity: 0.8,
+                                      sx={{
+                                        backgroundColor: getTaskColor(task),
+                                        color: 'white',
+                                        borderRadius: 1,
+                                        p: 0.5,
+                                        fontSize: '0.7rem',
+                                        cursor:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 'grabbing'
+                                            : 'grab',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5,
+                                        minHeight: '20px',
+                                        flex: 1,
+                                        maxHeight: '28px',
+
+                                        position:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 'fixed'
+                                            : 'relative',
+                                        zIndex:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 9999
+                                            : 'auto',
                                         transform:
                                           isDragging &&
                                           draggedTask?.id === task.id
@@ -648,76 +733,295 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                                               }px, ${
                                                 mousePosition.y - dragOffset.y
                                               }px) rotate(2deg) scale(1.05)`
-                                            : 'scale(1.05)',
+                                            : 'none',
+                                        opacity:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 0.8
+                                            : 1,
+                                        boxShadow:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? '0 8px 25px rgba(0, 0, 0, 0.3)'
+                                            : 'none',
+                                        '&:hover': {
+                                          opacity: 0.8,
+                                          borderRadius: 1,
+                                          transform:
+                                            isDragging &&
+                                            draggedTask?.id === task.id
+                                              ? `translate(${
+                                                  mousePosition.x - dragOffset.x
+                                                }px, ${
+                                                  mousePosition.y - dragOffset.y
+                                                }px) rotate(2deg) scale(1.05)`
+                                              : 'scale(1.02)',
+                                        },
+                                      }}
+                                    >
+                                      {/* Checkbox */}
+                                      <Box
+                                        sx={{
+                                          width: 12,
+                                          height: 12,
+                                          backgroundColor: '#1976d2',
+                                          borderRadius: 0.5,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            color: 'white',
+                                            fontSize: '0.6rem',
+                                            fontWeight: 'bold',
+                                          }}
+                                        >
+                                          ✓
+                                        </Typography>
+                                      </Box>
+
+                                      {/* Título truncado com estrela para tarefas importantes */}
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontWeight: '600',
+                                            fontSize: '0.7rem',
+                                            lineHeight: 1,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            flex: 1,
+                                            color: '#e0e0e0',
+                                          }}
+                                        >
+                                          {task.title.length > 22
+                                            ? `${task.title.substring(0, 22)}...`
+                                            : task.title}
+                                        </Typography>
+                                        {task.important && (
+                                          <Typography
+                                            sx={{
+                                              fontSize: '0.7rem',
+                                              color: '#ff9800',
+                                              flexShrink: 0,
+                                            }}
+                                          >
+                                            ⭐
+                                          </Typography>
+                                        )}
+                                      </Box>
+                                    </Box>
+                                  ))}
+                                </Box>
+                              ) : (
+                                // Se mais de 3 tarefas, mostra 3 + "Mais X"
+                                <>
+                                  {dayTasks.slice(0, 3).map((task, index) => (
+                                    <Box
+                                      key={task.id}
+                                      onMouseDown={e =>
+                                        handleMouseDown(e, task)
+                                      }
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        handlePreviewTask(task);
+                                      }}
+                                      sx={{
+                                        backgroundColor: getTaskColor(task),
+                                        color: 'white',
+                                        borderRadius: 1,
+                                        p: 0.5,
+                                        fontSize: '0.7rem',
+                                        cursor:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 'grabbing'
+                                            : 'grab',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5,
+                                        minHeight: '20px',
+                                        flex: 1,
+                                        maxHeight: '28px',
+                                        position:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 'fixed'
+                                            : 'relative',
+                                        zIndex:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 9999
+                                            : 'auto',
+                                        transform:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? `translate(${
+                                                mousePosition.x - dragOffset.x
+                                              }px, ${
+                                                mousePosition.y - dragOffset.y
+                                              }px) rotate(2deg) scale(1.05)`
+                                            : 'none',
+                                        opacity:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? 0.8
+                                            : 1,
+                                        boxShadow:
+                                          isDragging &&
+                                          draggedTask?.id === task.id
+                                            ? '0 8px 25px rgba(0, 0, 0, 0.3)'
+                                            : 'none',
+                                        '&:hover': {
+                                          opacity: 0.8,
+                                          borderRadius: 1,
+                                          transform:
+                                            isDragging &&
+                                            draggedTask?.id === task.id
+                                              ? `translate(${
+                                                  mousePosition.x - dragOffset.x
+                                                }px, ${
+                                                  mousePosition.y - dragOffset.y
+                                                }px) rotate(2deg) scale(1.05)`
+                                              : 'scale(1.02)',
+                                        },
+                                      }}
+                                    >
+                                      {/* Checkbox */}
+                                      <Box
+                                        sx={{
+                                          width: 12,
+                                          height: 12,
+                                          backgroundColor: '#1976d2',
+                                          borderRadius: 0.5,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            color: 'white',
+                                            fontSize: '0.6rem',
+                                            fontWeight: 'bold',
+                                          }}
+                                        >
+                                          ✓
+                                        </Typography>
+                                      </Box>
+
+                                      {/* Título truncado com estrela para tarefas importantes */}
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontWeight: 'bold',
+                                            fontSize: '0.65rem',
+                                            lineHeight: 1,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            flex: 1,
+                                            color: '#e0e0e0',
+                                          }}
+                                        >
+                                          {task.title.length > 22
+                                            ? `${task.title.substring(0, 22)}...`
+                                            : task.title}
+                                        </Typography>
+                                        {task.important && (
+                                          <Typography
+                                            sx={{
+                                              fontSize: '0.7rem',
+                                              color: '#ff9800',
+                                              flexShrink: 0,
+                                            }}
+                                          >
+                                            ⭐
+                                          </Typography>
+                                        )}
+                                      </Box>
+                                    </Box>
+                                  ))}
+
+                                  {/* Card "Mais X" */}
+                                  <Box
+                                    sx={{
+                                      backgroundColor: '#666',
+                                      color: '#e0e0e0',
+                                      borderRadius: 1,
+                                      textAlign: 'left',
+                                      fontSize: '0.7rem',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      p: 0.5,
+                                      minHeight: 'auto',
+                                      maxHeight: '28px',
+                                      width: '100%',
+                                      overflow: 'hidden',
+                                      paddingLeft: '5px',
+                                      justifyContent: 'left',
+                                      flex: 1,
+                                      fontWeight: 'bold',
+                                      '&:hover': {
+                                        backgroundColor: '#777',
+                                        borderRadius: 1,
                                       },
                                     }}
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      handleShowAllTasks(day, dayTasks);
+                                    }}
                                   >
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        fontWeight: 'bold',
-                                        fontSize: '0.5rem',
-                                        lineHeight: 1,
-                                      }}
-                                    >
-                                      {formatTaskTime(task)}
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        fontSize: '0.5rem',
-                                        lineHeight: 1,
-                                        textAlign: 'center',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        width: '100%',
-                                      }}
-                                    >
-                                      {task.title.length > 8
-                                        ? `${task.title.substring(0, 8)}...`
-                                        : task.title}
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ fontSize: '0.5rem' }}
-                                    >
-                                      {priorityIcons[task.priority]}
-                                    </Typography>
+                                    Mais {dayTasks.length - 3}
                                   </Box>
-                                </Tooltip>
-                              ))}
-
-                              {/* Contador para tarefas extras (acima de 9) */}
-                              {dayTasks.length > 9 && (
-                                <Box
-                                  sx={{
-                                    backgroundColor: '#444',
-                                    color: '#b0b0b0',
-                                    borderRadius: 0.5,
-                                    p: 0.3,
-                                    textAlign: 'center',
-                                    fontSize: '0.5rem',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: '20px',
-                                    gridColumn: '1 / -1',
-                                    '&:hover': {
-                                      backgroundColor: '#555',
-                                    },
-                                  }}
-                                  onClick={(
-                                    e: React.MouseEvent<HTMLElement>
-                                  ) => {
-                                    e.stopPropagation();
-                                    handleDateChange(day);
-                                  }}
-                                >
-                                  +{dayTasks.length - 9} tarefas
-                                </Box>
+                                </>
                               )}
+                            </>
+                          ) : (
+                            // Mobile: mostra apenas "X tarefas"
+                            <Box
+                              sx={{
+                                height: '100%',
+                                overflow: 'hidden',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 0.3,
+                              }}
+                            >
+                              <Box
+                                onClick={() =>
+                                  handleShowAllTasks(day, dayTasks)
+                                }
+                                sx={{
+                                  backgroundColor: '#666',
+                                  color: '#e0e0e0',
+                                  borderRadius: 1,
+                                  textAlign: 'center',
+                                  fontSize: '0.6rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  p: 0.5,
+                                  minHeight: '20px',
+                                  width: '100%',
+                                  fontWeight: 'bold',
+                                  '&:hover': {
+                                    backgroundColor: '#777',
+                                    borderRadius: "1 !important",
+                                  },
+                                }}
+                              >
+                                {dayTasks.length}{' '}
+                                {dayTasks.length === 1 ? 'tarefa' : 'tarefas'}
+                              </Box>
                             </Box>
                           )}
                         </Box>
@@ -731,206 +1035,88 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
         ))}
       </Paper>
 
-      {/* Lista de Tarefas do Dia Selecionado */}
-      {selectedDate && (
-        <Paper
-          sx={{
-            p: 2,
-            borderRadius: 2,
-            mt: 3,
-            backgroundColor: '#1e1e1e',
-            border: '1px solid #333',
-          }}
-        >
-          <Box
+      {/* Modal de Todas as Tarefas do Dia */}
+      <Dialog
+        open={showTasksModal}
+        onClose={handleCloseTasksModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedDay &&
+            `${selectedDay.date()} de ${selectedDay.format('MMMM')}`}
+          <IconButton
+            onClick={handleCloseTasksModal}
             sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: 'grey.500',
             }}
           >
-            <Typography variant="h6" sx={{ color: 'white' }}>
-              Tarefas para {selectedDate?.format('DD/MM/YYYY')}
-            </Typography>
-
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setShowNewTask(true)}
-              size="small"
-              sx={{
-                backgroundColor: '#1976d2',
-                '&:hover': {
-                  backgroundColor: '#1565c0',
-                },
-              }}
-            >
-              Nova Tarefa
-            </Button>
-          </Box>
-
-          {selectedDate && getTasksForDate(selectedDate).length === 0 ? (
-            <Alert severity="info">Nenhuma tarefa para este dia</Alert>
-          ) : (
+            ✕
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {selectedDayTasks.map(task => (
             <Box
+              key={task.id}
               sx={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: 1,
-                minHeight: 50,
+                alignItems: 'center',
+                p: 1,
+                mb: 1,
+                backgroundColor: getTaskColor(task),
+                color: 'white',
+                borderRadius: 1,
+                cursor: 'pointer',
+                '&:hover': {
+                  opacity: 0.8,
+                  borderRadius: 1,
+                },
+              }}
+              onClick={() => {
+                handleCloseTasksModal();
+                handlePreviewTask(task);
               }}
             >
-              {selectedDate &&
-                getTasksForDate(selectedDate).map((task, index) => (
-                  <Card
-                    key={task.id}
-                    onMouseDown={e => handleMouseDown(e, task)}
-                    sx={{
-                      mb: 1,
-                      cursor:
-                        isDragging && draggedTask?.id === task.id
-                          ? 'grabbing'
-                          : 'grab',
-                      backgroundColor: '#2a2a2a',
-                      border: '1px solid #333',
-                      transition:
-                        draggedTask?.id === task.id ? 'none' : 'all 0.2s ease',
-                      opacity: draggedTask?.id === task.id ? 0.8 : 1,
-                      transform:
-                        draggedTask?.id === task.id
-                          ? `translate(${mousePosition.x - dragOffset.x}px, ${
-                              mousePosition.y - dragOffset.y
-                            }px) rotate(2deg) scale(1.05)`
-                          : 'none',
-                      position:
-                        draggedTask?.id === task.id ? 'fixed' : 'relative',
-                      zIndex: draggedTask?.id === task.id ? 9999 : 'auto',
-                      boxShadow:
-                        draggedTask?.id === task.id
-                          ? '0 8px 25px rgba(0, 0, 0, 0.3)'
-                          : 'none',
-                      '&:hover': {
-                        backgroundColor: '#333',
-                      },
-                      '&:active': {
-                        cursor: 'grabbing',
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                        }}
-                      >
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{
-                              fontWeight: 'bold',
-                              mb: 0.5,
-                              color: 'white',
-                            }}
-                          >
-                            {task.title}
-                          </Typography>
-
-                          {task.description && (
-                            <Box
-                              sx={{
-                                mb: 1,
-                                color: '#b0b0b0',
-                                '& h1, & h2, & h3, & h4, & h5, & h6': {
-                                  color: '#b0b0b0',
-                                  margin: '2px 0',
-                                  fontSize: '0.875rem',
-                                },
-                                '& p': {
-                                  color: '#b0b0b0',
-                                  margin: '1px 0',
-                                  fontSize: '0.875rem',
-                                },
-                                '& strong, & b': {
-                                  fontWeight: 'bold',
-                                  color: '#b0b0b0',
-                                },
-                                '& em, & i': {
-                                  fontStyle: 'italic',
-                                  color: '#b0b0b0',
-                                },
-                                '& u': {
-                                  textDecoration: 'underline',
-                                  color: '#b0b0b0',
-                                },
-                                '& s, & strike': {
-                                  textDecoration: 'line-through',
-                                  color: '#b0b0b0',
-                                },
-                                '& a': {
-                                  color: '#64b5f6',
-                                  textDecoration: 'underline',
-                                },
-                                '& ul, & ol': {
-                                  paddingLeft: '12px',
-                                  color: '#b0b0b0',
-                                },
-                                '& li': {
-                                  color: '#b0b0b0',
-                                  margin: '1px 0',
-                                },
-                              }}
-                              dangerouslySetInnerHTML={{
-                                __html:
-                                  task.description.length > 100
-                                    ? `${task.description.substring(0, 100)}...`
-                                    : task.description,
-                              }}
-                            />
-                          )}
-
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              gap: 1,
-                              flexWrap: 'wrap',
-                            }}
-                          >
-                            <Chip
-                              label={task.priority}
-                              size="small"
-                              sx={{
-                                backgroundColor: priorityColors[task.priority],
-                                color: 'white',
-                              }}
-                            />
-
-                            {task.category && (
-                              <Chip
-                                label={task.category}
-                                size="small"
-                                variant="outlined"
-                                sx={{
-                                  color: '#b0b0b0',
-                                  borderColor: '#555',
-                                  '&:hover': {
-                                    borderColor: '#777',
-                                  },
-                                }}
-                              />
-                            )}
-                          </Box>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                ))}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  flex: 1,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 'bold',
+                    flex: 1,
+                  }}
+                >
+                  {task.title}
+                </Typography>
+                {task.important && (
+                  <Typography sx={{ fontSize: '1rem' }}>⭐</Typography>
+                )}
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  opacity: 0.8,
+                  ml: 1,
+                }}
+              >
+                {formatTaskTime(task)}
+              </Typography>
             </Box>
-          )}
-        </Paper>
-      )}
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseTasksModal}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal de Nova/Edição de Tarefa */}
       <TaskForm

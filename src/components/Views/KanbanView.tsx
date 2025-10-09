@@ -34,6 +34,7 @@ import { Task, TaskStatus } from '../../types';
 import { useTasks } from '../../hooks/useTasks';
 import { TaskForm } from '../Tasks/TaskForm';
 import { TaskPreview } from '../Tasks/TaskPreview';
+import { KanbanBoard } from '../Kanban/KanbanBoard';
 import { Confetti } from '../Animations/Confetti';
 import { Fireworks } from '../Animations/Fireworks';
 import { useCelebration } from '../../hooks/useCelebration';
@@ -261,6 +262,11 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
     setCreatingTaskForStatus(null);
   };
 
+  const handleTaskUpdated = () => {
+    // Forçar atualização da página para mostrar a nova tarefa
+    window.location.reload();
+  };
+
   const triggerQuickLoading = () => {
     setQuickLoading(true);
     setTimeout(() => {
@@ -358,523 +364,44 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
           <CircularProgress size={20} />
         </Box>
       )}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Box display="flex" gap={2} overflow="auto" minHeight="70vh" mt={1}>
-          {Object.entries(statusConfig).map(([status, config]) => (
-            <Box key={status} minWidth={300} flex={1}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    {config.icon}
-                    <Typography variant="h6" sx={{ ml: 1 }}>
-                      {config.title}
-                    </Typography>
-                    <Chip
-                      label={getTasksByStatus(status as TaskStatus).length}
-                      color={config.color}
-                      size="small"
-                      sx={{ ml: 'auto' }}
-                    />
-                  </Box>
-
-                  <Droppable droppableId={status}>
-                    {(provided: any, snapshot: any) => (
-                      <Box
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        sx={{
-                          minHeight: 200,
-                          bgcolor: snapshot.isDraggingOver
-                            ? 'rgba(25, 118, 210, 0.1)'
-                            : 'transparent',
-                          borderRadius: 2,
-                          border: snapshot.isDraggingOver
-                            ? '2px dashed #1976d2'
-                            : '2px dashed transparent',
-                          transition: 'all 0.2s ease-in-out',
-                          p: 1,
-                        }}
-                      >
-                        {getTasksByStatus(status as TaskStatus).length === 0 ? (
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              minHeight: 100,
-                              color: '#b0b0b0',
-                              fontSize: '0.875rem',
-                              textAlign: 'center',
-                              border: '2px dashed #333',
-                              borderRadius: 2,
-                              backgroundColor: '#1a1a1a',
-                              gap: 1,
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ color: '#b0b0b0' }}
-                            >
-                              Arraste tarefas para cá
-                            </Typography>
-                          </Box>
-                        ) : (
-                          getTasksByStatus(status as TaskStatus).map(
-                            (task, index) => (
-                              <Draggable
-                                key={task.id}
-                                draggableId={task.id}
-                                index={index}
-                              >
-                                {(provided: any, snapshot: any) => (
-                                  <Card
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    onClick={() => handlePreviewTask(task)}
-                                    sx={{
-                                      mb: 2,
-                                      height: '280px',
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      cursor: snapshot.isDragging
-                                        ? 'grabbing'
-                                        : 'pointer',
-                                      opacity: snapshot.isDragging ? 0.8 : 1,
-                                      transform: snapshot.isDragging
-                                        ? 'rotate(5deg) scale(1.05)'
-                                        : 'none',
-                                      backgroundColor: '#2a2a2a',
-                                      border: snapshot.isDragging
-                                        ? '2px solid #1976d2'
-                                        : '1px solid #333',
-                                      borderRadius: 2,
-                                      boxShadow: snapshot.isDragging
-                                        ? '0 8px 25px rgba(25, 118, 210, 0.3)'
-                                        : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                      transition: 'all 0.2s ease-in-out',
-                                      '&:hover': {
-                                        backgroundColor: '#333',
-                                        boxShadow:
-                                          '0 4px 12px rgba(0, 0, 0, 0.2)',
-                                        transform: 'translateY(-2px)',
-                                      },
-                                      ...(task.important && {
-                                        borderLeft: '4px solid #ff9800',
-                                      }),
-                                    }}
-                                  >
-                                    <CardContent
-                                      sx={{
-                                        p: 2.5,
-                                        flex: 1,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                      }}
-                                    >
-                                      {/* Header com título e menu */}
-                                      <Box
-                                        display="flex"
-                                        justifyContent="space-between"
-                                        alignItems="flex-start"
-                                        mb={1.5}
-                                      >
-                                        <Typography
-                                          variant="h6"
-                                          sx={{
-                                            color: 'white',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            lineHeight: 1.3,
-                                            flex: 1,
-                                            pr: 1,
-                                            textDecoration:
-                                              task.status === 'completed'
-                                                ? 'line-through'
-                                                : 'none',
-                                            opacity:
-                                              task.status === 'completed'
-                                                ? 0.7
-                                                : 1,
-                                          }}
-                                        >
-                                          {task.title}
-                                        </Typography>
-
-                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                          {/* Checkbox para marcar como concluída */}
-                                          <IconButton
-                                            size="small"
-                                            onClick={(e: React.MouseEvent) => {
-                                              e.stopPropagation();
-                                              handleCompleteTask(task);
-                                            }}
-                                            sx={{
-                                              color:
-                                                task.status === 'completed'
-                                                  ? '#4caf50'
-                                                  : '#b0b0b0',
-                                              '&:hover': {
-                                                color:
-                                                  task.status === 'completed'
-                                                    ? '#4caf50'
-                                                    : '#4caf50',
-                                                backgroundColor:
-                                                  'rgba(76, 175, 80, 0.1)',
-                                              },
-                                            }}
-                                          >
-                                            {task.status === 'completed' ? (
-                                              <CheckBox fontSize="small" />
-                                            ) : (
-                                              <CheckBoxOutlineBlank fontSize="small" />
-                                            )}
-                                          </IconButton>
-
-                                          <IconButton
-                                            size="small"
-                                            onClick={(
-                                              e: React.MouseEvent<HTMLElement>
-                                            ) => {
-                                              e.stopPropagation();
-                                              handleMenuOpen(e, task);
-                                            }}
-                                            sx={{
-                                              color: '#b0b0b0',
-                                              '&:hover': {
-                                                backgroundColor: '#444',
-                                                color: 'white',
-                                              },
-                                            }}
-                                          >
-                                            <MoreVert fontSize="small" />
-                                          </IconButton>
-                                        </Box>
-                                      </Box>
-
-                                      {/* Descrição */}
-                                      {task.description && (
-                                        <Box
-                                          sx={{
-                                            color: '#b0b0b0',
-                                            mb: 2,
-                                            lineHeight: 1.4,
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 2,
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden',
-                                            '& h1, & h2, & h3, & h4, & h5, & h6':
-                                              {
-                                                color: '#b0b0b0',
-                                                margin: '4px 0',
-                                                fontSize: '0.875rem',
-                                              },
-                                            '& p': {
-                                              color: '#b0b0b0',
-                                              margin: '2px 0',
-                                              fontSize: '0.875rem',
-                                            },
-                                            '& strong, & b': {
-                                              fontWeight: 'bold',
-                                              color: '#b0b0b0',
-                                            },
-                                            '& em, & i': {
-                                              fontStyle: 'italic',
-                                              color: '#b0b0b0',
-                                            },
-                                            '& u': {
-                                              textDecoration: 'underline',
-                                              color: '#b0b0b0',
-                                            },
-                                            '& s, & strike': {
-                                              textDecoration: 'line-through',
-                                              color: '#b0b0b0',
-                                            },
-                                            '& a': {
-                                              color: '#64b5f6',
-                                              textDecoration: 'underline',
-                                            },
-                                            '& ul, & ol': {
-                                              paddingLeft: '16px',
-                                              color: '#b0b0b0',
-                                            },
-                                            '& li': {
-                                              color: '#b0b0b0',
-                                              margin: '1px 0',
-                                            },
-                                          }}
-                                          dangerouslySetInnerHTML={{
-                                            __html:
-                                              task.description.length > 100
-                                                ? `${task.description.substring(
-                                                    0,
-                                                    100
-                                                  )}...`
-                                                : task.description,
-                                          }}
-                                        />
-                                      )}
-
-                                      {/* Tags e informações */}
-                                      <Box
-                                        display="flex"
-                                        gap={1}
-                                        flexWrap="wrap"
-                                        alignItems="center"
-                                      >
-                                        {/* Categoria */}
-                                        {task.category && (
-                                          <Chip
-                                            label={task.category}
-                                            size="small"
-                                            sx={{
-                                              backgroundColor: '#444',
-                                              color: '#e0e0e0',
-                                              border: '1px solid #555',
-                                              fontSize: '0.75rem',
-                                              height: 24,
-                                              '& .MuiChip-label': {
-                                                px: 1,
-                                              },
-                                            }}
-                                          />
-                                        )}
-
-                                        {/* Prioridade */}
-                                        <Chip
-                                          label={task.priority}
-                                          size="small"
-                                          sx={{
-                                            backgroundColor:
-                                              priorityColors[task.priority],
-                                            color: 'white',
-                                            fontSize: '0.75rem',
-                                            height: 24,
-                                            fontWeight: 500,
-                                            '& .MuiChip-label': {
-                                              px: 1,
-                                            },
-                                          }}
-                                        />
-
-                                        {/* Data */}
-                                        <Chip
-                                          label={formatDate(task.due_date)}
-                                          size="small"
-                                          sx={{
-                                            backgroundColor: isOverdue(
-                                              task.due_date
-                                            )
-                                              ? '#f44336'
-                                              : '#333',
-                                            color: isOverdue(task.due_date)
-                                              ? 'white'
-                                              : '#b0b0b0',
-                                            border: isOverdue(task.due_date)
-                                              ? 'none'
-                                              : '1px solid #555',
-                                            fontSize: '0.75rem',
-                                            height: 24,
-                                            '& .MuiChip-label': {
-                                              px: 1,
-                                            },
-                                          }}
-                                        />
-
-                                        {/* Importante */}
-                                        {task.important && (
-                                          <Chip
-                                            label="⭐ Importante"
-                                            size="small"
-                                            sx={{
-                                              backgroundColor: '#ff9800',
-                                              color: 'white',
-                                              fontSize: '0.75rem',
-                                              height: 24,
-                                              fontWeight: 500,
-                                              '& .MuiChip-label': {
-                                                px: 1,
-                                              },
-                                            }}
-                                          />
-                                        )}
-                                      </Box>
-                                    </CardContent>
-                                  </Card>
-                                )}
-                              </Draggable>
-                            )
-                          )
-                        )}
-
-                        {/* Botão + Criar quando há tarefas */}
-                        {getTasksByStatus(status as TaskStatus).length > 0 && (
-                          <Box
-                            onClick={() =>
-                              handleCreateTask(status as TaskStatus)
-                            }
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'left',
-                              justifyContent: 'left',
-                              gap: 0.5,
-                              padding: '8px 16px',
-                              // backgroundColor: '#1976d2',
-                              color: 'white',
-                              borderRadius: 1,
-                              border: '1px solid #333',
-                              cursor: 'pointer',
-                              fontSize: '0.875rem',
-                              fontWeight: 500,
-                              transition: 'all 0.2s ease',
-                              marginTop: 1,
-                              '&:hover': {
-                                transform: 'translateY(-1px)',
-                                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.3)',
-                              },
-                            }}
-                          >
-                            <Add fontSize="small" />
-                            Criar Tarefa
-                          </Box>
-                        )}
-
-                        {provided.placeholder}
-                      </Box>
-                    )}
-                  </Droppable>
-                </CardContent>
-              </Card>
-            </Box>
-          ))}
-        </Box>
-      </DragDropContext>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          sx: {
-            backgroundColor: '#2a2a2a',
-            border: '1px solid #333',
-            borderRadius: 2,
-          },
+      
+      <KanbanBoard
+        tasks={localTasks}
+        onUpdateTask={async (taskId, updates) => {
+          await updateTask(taskId, updates);
         }}
-      >
-        <MenuItem onClick={handleViewTask}>
-          <ListItemIcon>
-            <Visibility />
-          </ListItemIcon>
-          <ListItemText>Visualizar</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={handleEdit}>
-          <ListItemIcon>
-            <Edit />
-          </ListItemIcon>
-          <ListItemText>Editar</ListItemText>
-        </MenuItem>
-
-        {/* Opções baseadas no status atual */}
-        {selectedTask && (
-          <>
-            {selectedTask.status === 'todo' && (
-              <MenuItem onClick={handleMoveToNextStage}>
-                <ListItemIcon>
-                  <PlayArrow />
-                </ListItemIcon>
-                <ListItemText>Mover para Em Andamento</ListItemText>
-              </MenuItem>
-            )}
-
-            {selectedTask.status === 'in_progress' && (
-              <MenuItem onClick={handleMoveToNextStage}>
-                <ListItemIcon>
-                  <CheckCircle />
-                </ListItemIcon>
-                <ListItemText>Marcar como Concluída</ListItemText>
-              </MenuItem>
-            )}
-
-            {selectedTask.status === 'completed' && (
-              <MenuItem onClick={handleMoveToPreviousStage}>
-                <ListItemIcon>
-                  <Pause />
-                </ListItemIcon>
-                <ListItemText>Voltar para Em Andamento</ListItemText>
-              </MenuItem>
-            )}
-          </>
-        )}
-
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-          <ListItemIcon>
-            <Delete color="error" />
-          </ListItemIcon>
-          <ListItemText>Excluir</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      {editingTask && (
-        <TaskForm
-          open={Boolean(editingTask)}
-          onClose={() => setEditingTask(null)}
-          userId={editingTask.user_id}
-          taskId={editingTask.id}
-          onTaskUpdated={() => {
-            // Trigger loading rápido e atualizar estado
-            triggerQuickLoading();
-            setLocalTasks(tasks);
-          }}
-          initialData={{
-            title: editingTask.title,
-            description: editingTask.description || '',
-            due_date: editingTask.due_date,
-            priority: editingTask.priority,
-            category: editingTask.category,
-            important: editingTask.important,
-            status: editingTask.status,
-          }}
-        />
-      )}
-
-      {creatingTaskForStatus && (
-        <TaskForm
-          open={Boolean(creatingTaskForStatus)}
-          onClose={handleTaskCreated}
-          userId={tasks[0]?.user_id || ''}
-          onTaskUpdated={() => {
-            // Trigger loading rápido e atualizar estado
-            triggerQuickLoading();
-            setLocalTasks(tasks);
-            handleTaskCreated();
-          }}
-          initialData={{
-            title: '',
-            description: '',
-            due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Amanhã
-            priority: 'Média',
-            category: '',
-            important: false,
-            status: creatingTaskForStatus,
-          }}
-        />
-      )}
-
-      {previewTask && (
-        <TaskPreview
-          open={Boolean(previewTask)}
-          onClose={() => setPreviewTask(null)}
-          task={previewTask}
-          onEdit={handleEditFromPreview}
-        />
-      )}
+        onDeleteTask={async (taskId) => {
+          await deleteTask(taskId);
+        }}
+        onCreateTask={(status) => handleCreateTask(status as TaskStatus)}
+        showProgress={false} // SEM progresso no modo Kanban
+        emptyMessage="Nenhuma tarefa encontrada. Que tal criar uma nova?"
+      />
 
       {/* Celebration Animations */}
       <Confetti trigger={showConfetti} onComplete={handleConfettiComplete} />
       <Fireworks trigger={showFireworks} onComplete={handleFireworksComplete} />
+
+      {/* Task Form Modal */}
+      <TaskForm
+        open={Boolean(creatingTaskForStatus)}
+        onClose={() => setCreatingTaskForStatus(null)}
+        userId={tasks[0]?.user_id || ''}
+        onTaskUpdated={handleTaskUpdated}
+        initialData={
+          creatingTaskForStatus
+            ? {
+                title: '',
+                description: '',
+                due_date: new Date().toISOString(),
+                priority: 'Média' as const,
+                category: '',
+                important: false,
+                status: creatingTaskForStatus,
+              }
+            : undefined
+        }
+      />
     </>
   );
 };

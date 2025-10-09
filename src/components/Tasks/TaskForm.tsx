@@ -328,7 +328,7 @@ export const TaskForm = ({
                   label="Prioridade"
                   sx={{ borderRadius: 2 }}
                 >
-                  <MenuItem value="low">
+                  <MenuItem value="Baixa">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Box
                         sx={{

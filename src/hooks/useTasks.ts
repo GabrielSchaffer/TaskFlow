@@ -5,6 +5,14 @@ import { Task, TaskFormData } from '../types';
 export const useTasks = (userId: string) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Função para forçar refresh
+  const forceRefresh = () => {
+    console.log('🔄 Forçando refresh das tarefas');
+    setRefreshKey(prev => prev + 1);
+    fetchTasks();
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -13,7 +21,7 @@ export const useTasks = (userId: string) => {
 
     // Subscribe to real-time changes
     const subscription = supabase
-      .channel('tasks')
+      .channel(`tasks-${userId}`)
       .on(
         'postgres_changes',
         {
@@ -22,11 +30,15 @@ export const useTasks = (userId: string) => {
           table: 'tasks',
           filter: `user_id=eq.${userId}`,
         },
-        () => {
-          fetchTasks();
+        (payload) => {
+          console.log('🔔 Real-time event received:', payload.eventType, payload.new);
+          // Sempre fazer refresh quando há mudanças via real-time
+          setTimeout(() => fetchTasks(), 200);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Supabase subscription status:', status);
+      });
 
     return () => {
       subscription.unsubscribe();
@@ -35,6 +47,7 @@ export const useTasks = (userId: string) => {
 
   const fetchTasks = async () => {
     try {
+      console.log('🔄 Buscando tarefas do usuário:', userId);
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -42,9 +55,10 @@ export const useTasks = (userId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('✅ Tarefas encontradas:', data?.length || 0);
       setTasks(data || []);
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('❌ Erro ao buscar tarefas:', error);
     } finally {
       setLoading(false);
     }
@@ -57,15 +71,19 @@ export const useTasks = (userId: string) => {
         .insert({
           ...taskData,
           user_id: userId,
-          status: 'todo',
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Atualizar o estado local imediatamente
-      await fetchTasks();
+      // Adicionar imediatamente ao estado local para feedback instantâneo
+      if (data) {
+        console.log('✅ Adicionando nova tarefa ao estado:', data.title);
+        setTasks(prev => [data, ...prev]);
+        // Força refresh adicional para garantir sincronização
+        setTimeout(() => forceRefresh(), 100);
+      }
 
       return { data, error: null };
     } catch (error) {
@@ -85,8 +103,12 @@ export const useTasks = (userId: string) => {
 
       if (error) throw error;
 
-      // Atualizar o estado local imediatamente
-      await fetchTasks();
+      // Atualizar imediatamente no estado local
+      if (data) {
+        setTasks(prev => 
+          prev.map(task => task.id === id ? data : task)
+        );
+      }
 
       return { data, error: null };
     } catch (error) {
@@ -101,8 +123,8 @@ export const useTasks = (userId: string) => {
 
       if (error) throw error;
 
-      // Atualizar o estado local imediatamente
-      await fetchTasks();
+      // Remover imediatamente do estado local
+      setTasks(prev => prev.filter(task => task.id !== id));
 
       return { error: null };
     } catch (error) {
@@ -126,6 +148,13 @@ export const useTasks = (userId: string) => {
         | 'Média'
         | 'Baixa';
 
+      const updatedTask = {
+        ...task,
+        due_date: nextDay.toISOString(),
+        priority: newPriority,
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('tasks')
         .update({
@@ -137,8 +166,10 @@ export const useTasks = (userId: string) => {
 
       if (error) throw error;
 
-      // Atualizar o estado local imediatamente
-      await fetchTasks();
+      // Atualizar imediatamente no estado local
+      setTasks(prev => 
+        prev.map(t => t.id === taskId ? updatedTask : t)
+      );
 
       return { error: null };
     } catch (error) {
@@ -154,5 +185,7 @@ export const useTasks = (userId: string) => {
     updateTask,
     deleteTask,
     moveTaskToNextDay,
+    forceRefresh,
+    refreshKey,
   };
 };

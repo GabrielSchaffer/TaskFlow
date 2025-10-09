@@ -16,7 +16,7 @@ export type Database = {
           title: string;
           description: string | null;
           due_date: string;
-          priority: 'Alta' | 'Média' | 'low';
+          priority: 'Alta' | 'Média' | 'Baixa';
           category: string;
           status: 'todo' | 'in_progress' | 'completed';
           user_id: string;
@@ -28,7 +28,7 @@ export type Database = {
           title: string;
           description?: string | null;
           due_date: string;
-          priority: 'Alta' | 'Média' | 'low';
+          priority: 'Alta' | 'Média' | 'Baixa';
           category: string;
           status?: 'todo' | 'in_progress' | 'completed';
           user_id: string;
