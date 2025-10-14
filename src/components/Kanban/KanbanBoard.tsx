@@ -39,6 +39,7 @@ import {
 } from '@mui/icons-material';
 import { Task, TaskStatus } from '../../types';
 import { TaskPreview } from '../Tasks/TaskPreview';
+import { TaskForm } from '../Tasks/TaskForm';
 import dayjs from 'dayjs';
 
 interface KanbanBoardProps {
@@ -49,6 +50,7 @@ interface KanbanBoardProps {
   showProgress?: boolean; // Para mostrar/esconder o progresso
   emptyMessage?: string;
   onCreateTask?: (status: string) => void; // Callback para criar tarefa
+  onTaskEdited?: () => void; // Callback quando uma tarefa é editada via formulário
 }
 
 const priorityColors = {
@@ -83,6 +85,7 @@ export const KanbanBoard = ({
   showProgress = true,
   emptyMessage = 'Nenhuma tarefa encontrada.',
   onCreateTask,
+  onTaskEdited,
 }: KanbanBoardProps) => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
@@ -136,6 +139,7 @@ export const KanbanBoard = ({
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, task: Task) => {
+    event.stopPropagation(); // Impede que o clique abra o preview
     setAnchorEl(event.currentTarget);
     setSelectedTask(task);
   };
@@ -154,8 +158,10 @@ export const KanbanBoard = ({
 
   const handleDeleteTask = async () => {
     if (selectedTask) {
-      await onDeleteTask(selectedTask.id);
+      const taskId = selectedTask.id;
+      // Fechar o menu ANTES de deletar para evitar que fique flutuando
       handleMenuClose();
+      await onDeleteTask(taskId);
     }
   };
 
@@ -702,6 +708,32 @@ export const KanbanBoard = ({
           onClose={() => setPreviewTask(null)}
           task={previewTask}
           onEdit={handleEditFromPreview}
+        />
+      )}
+
+      {/* Task Edit Modal */}
+      {editingTask && (
+        <TaskForm
+          open={Boolean(editingTask)}
+          onClose={() => setEditingTask(null)}
+          userId={editingTask.user_id}
+          taskId={editingTask.id}
+          onTaskUpdated={() => {
+            setEditingTask(null);
+            // Notifica o componente pai para atualizar a lista de tarefas
+            if (onTaskEdited) {
+              onTaskEdited();
+            }
+          }}
+          initialData={{
+            title: editingTask.title,
+            description: editingTask.description || '',
+            due_date: editingTask.due_date,
+            priority: editingTask.priority,
+            category: editingTask.category,
+            important: editingTask.important,
+            status: editingTask.status,
+          }}
         />
       )}
     </>

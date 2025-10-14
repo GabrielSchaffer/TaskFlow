@@ -83,13 +83,13 @@ export const TasksPage = () => {
   const renderView = () => {
     switch (viewMode) {
       case 'kanban':
-        return <KanbanView tasks={tasks} loading={loading} />;
+        return <KanbanView tasks={tasks} loading={loading} onRefresh={forceRefresh} />;
       case 'calendar':
         return <CalendarView tasks={tasks} loading={loading} />;
       case 'list':
         return <ListView tasks={tasks} loading={loading} />;
       default:
-        return <KanbanView tasks={tasks} loading={loading} />;
+        return <KanbanView tasks={tasks} loading={loading} onRefresh={forceRefresh} />;
     }
   };
 
