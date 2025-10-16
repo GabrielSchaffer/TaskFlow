@@ -31,6 +31,7 @@ export const CustomThemeProvider = ({
   );
 
   const setColorTheme = (themeId: string) => {
+    console.log('🔄 Mudando tema para:', themeId);
     const newTheme = getColorTheme(themeId);
     setColorThemeState(newTheme);
 
@@ -55,6 +56,12 @@ export const CustomThemeProvider = ({
   }, [initialThemeId]);
 
   // Criar tema do Material-UI com as cores personalizadas
+  console.log('🎨 Aplicando tema:', colorTheme.id, colorTheme.name);
+  console.log('🎨 Cores do tema:', colorTheme);
+  
+  // Detectar se é o tema escuro dourado
+  const isDarkGoldTheme = colorTheme.id === 'dark-gold';
+  
   const muiTheme = createTheme({
     palette: {
       mode: 'dark',
@@ -68,6 +75,10 @@ export const CustomThemeProvider = ({
         default: '#121212',
         paper: '#1e1e1e',
       },
+      text: {
+        primary: '#fff',
+        secondary: '#b0b0b0',
+      },
     },
     components: {
       MuiButton: {
@@ -78,6 +89,7 @@ export const CustomThemeProvider = ({
           },
           contained: {
             background: colorTheme.buttonGradient,
+            color: isDarkGoldTheme ? '#000' : 'white',
             '&:hover': {
               background: colorTheme.buttonGradient,
               filter: 'brightness(0.9)',

@@ -21,6 +21,7 @@ import { Add, ChevronLeft, ChevronRight, Today } from '@mui/icons-material';
 // Removido react-beautiful-dnd devido a problemas de compatibilidade
 import { Task } from '../../types';
 import { useTasks } from '../../hooks/useTasks';
+import { useTheme } from '../../contexts/ThemeContext';
 import { TaskForm } from '../Tasks/TaskForm';
 import { TaskPreview } from '../Tasks/TaskPreview';
 import dayjs from 'dayjs';
@@ -46,12 +47,55 @@ const priorityIcons = {
 } as const;
 
 export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
+  const { colorTheme } = useTheme();
   const { deleteTask, updateTask } = useTasks(tasks[0]?.user_id || '');
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [currentDate, setCurrentDate] = useState(dayjs()); // Agora é dinâmico
   const [showNewTask, setShowNewTask] = useState(false);
+
+  // Sincronizar localTasks com tasks quando tasks mudar
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
+  // Sincronizar previewTask quando localTasks mudar
+  useEffect(() => {
+    if (previewTask) {
+      const updatedTask = localTasks.find(t => t.id === previewTask.id);
+      if (updatedTask) {
+        setPreviewTask(updatedTask);
+      }
+    }
+  }, [localTasks, previewTask]);
+
+  // Função para atualizar tarefa com atualização otimista
+  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+    console.log('🔄 CalendarView handleUpdateTask chamado:', { taskId, updates });
+    // Atualização otimista - atualizar UI imediatamente
+    const taskToUpdate = localTasks.find(t => t.id === taskId);
+    
+    setLocalTasks(prevTasks =>
+      prevTasks.map(t =>
+        t.id === taskId
+          ? { ...t, ...updates, updated_at: new Date().toISOString() }
+          : t
+      )
+    );
+    
+    try {
+      await updateTask(taskId, updates);
+    } catch (error) {
+      // Reverter em caso de erro
+      console.error('Erro ao atualizar tarefa:', error);
+      if (taskToUpdate) {
+        setLocalTasks(prevTasks =>
+          prevTasks.map(t => (t.id === taskId ? taskToUpdate : t))
+        );
+      }
+    }
+  };
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(dayjs());
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverDate, setDragOverDate] = useState<dayjs.Dayjs | null>(null);
@@ -223,7 +267,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
   const getTasksForDate = (date: dayjs.Dayjs) => {
     return localTasks.filter(task => {
       const taskDate = dayjs(task.due_date);
-      return taskDate.isSame(date, 'day');
+      return taskDate.isSame(date, 'day') && task.status !== 'completed';
     });
   };
 
@@ -311,7 +355,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
     <Box
       sx={{
         p: { xs: 0.5, sm: 2, md: 3 }, // Padding responsivo - muito menor no mobile
-        backgroundColor: '#121212',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         width: '100%',
         overflow: 'hidden', // Evita overflow horizontal
@@ -340,7 +384,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
           sx={{
             minWidth: { xs: '32px', sm: '40px' }, // Menor em mobile
             height: { xs: '32px', sm: '36px' }, // Altura responsiva
-            color: '#e0e0e0',
+            color: '#191919',
             borderColor: '#555',
             '&:hover': {
               borderColor: '#777',
@@ -379,12 +423,13 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
             onClick={goToToday}
             startIcon={<Today sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
             sx={{
-              backgroundColor: '#1976d2',
+              backgroundColor: colorTheme.id === 'dark-gold' ? '#FFC700' : '#1976d2',
+              color: colorTheme.id === 'dark-gold' ? '#000' : 'white',
               fontSize: { xs: '0.7rem', sm: '0.875rem' }, // Fonte menor em mobile
               px: { xs: 1, sm: 2 }, // Padding horizontal responsivo
               py: { xs: 0.5, sm: 1 }, // Padding vertical responsivo
               '&:hover': {
-                backgroundColor: '#1565c0',
+                backgroundColor: colorTheme.id === 'dark-gold' ? '#E6B300' : '#1565c0',
               },
             }}
           >
@@ -400,7 +445,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
           sx={{
             minWidth: { xs: '32px', sm: '40px' }, // Menor em mobile
             height: { xs: '32px', sm: '36px' }, // Altura responsiva
-            color: '#e0e0e0',
+            color: '#191919',
             borderColor: '#555',
             '&:hover': {
               borderColor: '#777',
@@ -795,7 +840,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',
                                             flex: 1,
-                                            color: '#e0e0e0',
+                                            color: '#191919',
                                           }}
                                         >
                                           {task.title.length > 22
@@ -927,7 +972,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',
                                             flex: 1,
-                                            color: '#e0e0e0',
+                                            color: '#191919',
                                           }}
                                         >
                                           {task.title.length > 22
@@ -953,7 +998,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                                   <Box
                                     sx={{
                                       backgroundColor: '#666',
-                                      color: '#e0e0e0',
+                                      color: '#191919',
                                       borderRadius: 1,
                                       textAlign: 'left',
                                       fontSize: '0.7rem',
@@ -1001,7 +1046,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
                                 }
                                 sx={{
                                   backgroundColor: '#666',
-                                  color: '#e0e0e0',
+                                  color: '#191919',
                                   borderRadius: 1,
                                   textAlign: 'center',
                                   fontSize: '0.6rem',
@@ -1162,6 +1207,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
           onClose={() => setPreviewTask(null)}
           task={previewTask}
           onEdit={handleEditFromPreview}
+          onUpdateTask={handleUpdateTask}
         />
       )}
     </Box>

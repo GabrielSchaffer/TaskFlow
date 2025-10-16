@@ -38,7 +38,9 @@ import {
   ExpandLess,
 } from '@mui/icons-material';
 import { Task, TaskStatus } from '../../types';
+import { useTheme } from '../../contexts/ThemeContext';
 import { TaskPreview } from '../Tasks/TaskPreview';
+import { TaskForm } from '../Tasks/TaskForm';
 import dayjs from 'dayjs';
 
 interface KanbanBoardProps {
@@ -49,6 +51,7 @@ interface KanbanBoardProps {
   showProgress?: boolean; // Para mostrar/esconder o progresso
   emptyMessage?: string;
   onCreateTask?: (status: string) => void; // Callback para criar tarefa
+  onTaskEdited?: () => void; // Callback quando uma tarefa é editada via formulário
 }
 
 const priorityColors = {
@@ -57,23 +60,23 @@ const priorityColors = {
   Baixa: '#2196f3',
 } as const;
 
-const statusConfig = {
+const getStatusConfig = (colorTheme: any) => ({
   todo: {
     title: 'Pendentes',
-    color: '#3169CC',
+    color: colorTheme.id === 'dark-gold' ? '#FFC700' : '#3169CC',
     icon: <PendingActions />,
   },
   in_progress: {
     title: 'Em Andamento',
-    color: '#6448BE',
+    color: colorTheme.id === 'dark-gold' ? '#E6B300' : '#6448BE',
     icon: <PlayCircleOutline />,
   },
   completed: {
     title: 'Concluídas',
-    color: '#3AAD0493',
+    color: colorTheme.id === 'dark-gold' ? '#4CAF50' : '#3AAD0493',
     icon: <DoneAll />,
   },
-};
+});
 
 export const KanbanBoard = ({
   tasks,
@@ -83,7 +86,9 @@ export const KanbanBoard = ({
   showProgress = true,
   emptyMessage = 'Nenhuma tarefa encontrada.',
   onCreateTask,
+  onTaskEdited,
 }: KanbanBoardProps) => {
+  const { colorTheme } = useTheme();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -136,6 +141,7 @@ export const KanbanBoard = ({
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, task: Task) => {
+    event.stopPropagation(); // Impede que o clique abra o preview
     setAnchorEl(event.currentTarget);
     setSelectedTask(task);
   };
@@ -154,8 +160,10 @@ export const KanbanBoard = ({
 
   const handleDeleteTask = async () => {
     if (selectedTask) {
-      await onDeleteTask(selectedTask.id);
+      const taskId = selectedTask.id;
+      // Fechar o menu ANTES de deletar para evitar que fique flutuando
       handleMenuClose();
+      await onDeleteTask(taskId);
     }
   };
 
@@ -271,7 +279,7 @@ export const KanbanBoard = ({
       {tasks.length === 0 ? (
         <Alert
           severity="info"
-          sx={{ backgroundColor: '#1e1e1e', color: '#b0b0b0' }}
+          sx={{ backgroundColor: 'background.paper', color: 'text.secondary' }}
         >
           {emptyMessage}
         </Alert>
@@ -290,7 +298,7 @@ export const KanbanBoard = ({
               flexDirection: { xs: 'column', sm: 'row' }, // Coluna em mobile, linha em desktop
             }}
           >
-            {Object.entries(statusConfig).map(([status, config]) => (
+            {Object.entries(getStatusConfig(colorTheme)).map(([status, config]) => (
               <Box 
                 key={status} 
                 sx={{ 
@@ -702,6 +710,33 @@ export const KanbanBoard = ({
           onClose={() => setPreviewTask(null)}
           task={previewTask}
           onEdit={handleEditFromPreview}
+          onUpdateTask={onUpdateTask}
+        />
+      )}
+
+      {/* Task Edit Modal */}
+      {editingTask && (
+        <TaskForm
+          open={Boolean(editingTask)}
+          onClose={() => setEditingTask(null)}
+          userId={editingTask.user_id}
+          taskId={editingTask.id}
+          onTaskUpdated={() => {
+            setEditingTask(null);
+            // Notifica o componente pai para atualizar a lista de tarefas
+            if (onTaskEdited) {
+              onTaskEdited();
+            }
+          }}
+          initialData={{
+            title: editingTask.title,
+            description: editingTask.description || '',
+            due_date: editingTask.due_date,
+            priority: editingTask.priority,
+            category: editingTask.category,
+            important: editingTask.important,
+            status: editingTask.status,
+          }}
         />
       )}
     </>

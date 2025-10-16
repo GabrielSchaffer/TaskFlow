@@ -42,7 +42,7 @@ export const Layout = ({ children }: LayoutProps) => {
           width: { sm: `calc(100% - 280px)` },
           ml: { sm: `280px` },
           display: { xs: 'block', sm: 'none' }, // Apenas em mobile
-          backgroundColor: '#1e1e1e',
+          backgroundColor: colorTheme.sidebarGradient,
           borderBottom: '1px solid #333',
         }}
       >
@@ -57,11 +57,7 @@ export const Layout = ({ children }: LayoutProps) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ 
-            background: `linear-gradient(90deg, ${colorTheme.primary} 0%, ${colorTheme.secondary} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            color: 'transparent',
+            color: 'white',
             fontWeight: 'bold'
           }}>
             TaskFlow - Gerenciador de Tarefas
@@ -83,6 +79,8 @@ export const Layout = ({ children }: LayoutProps) => {
         flexDirection: 'column',
         width: { xs: '100%', sm: 'calc(100% - 280px)' }, // Largura total em mobile, menos sidebar em desktop
         ml: { xs: 0, sm: 0 }, // Sem margin em mobile
+        backgroundColor: 'background.default',
+        minHeight: '100vh',
       }}>
         {/* Spacer para AppBar em mobile */}
         <Box sx={{ display: { xs: 'block', sm: 'none' }, height: '64px' }} />

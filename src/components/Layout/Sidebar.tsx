@@ -362,7 +362,12 @@ const SidebarContent = ({ onNewTask }: { onNewTask: () => void }) => {
           sx={{
             py: 1.5,
             borderRadius: 2,
+            fontWeight: 'bold',
+            letterSpacing: '0.03em',
+            textTransform: 'uppercase',
+            fontFamily: '"Roboto","Helvetica","Arial",sans-serif',
             background: colorTheme.buttonGradient,
+            color: colorTheme.id === 'dark-gold' ? '#191919' : 'white',
             '&:hover': {
               background: colorTheme.buttonGradient,
               filter: 'brightness(0.9)',

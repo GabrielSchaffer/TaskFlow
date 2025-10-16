@@ -42,6 +42,7 @@ import { useCelebration } from '../../hooks/useCelebration';
 interface KanbanViewProps {
   tasks: Task[];
   loading: boolean;
+  onRefresh?: () => void;
 }
 
 const statusConfig = {
@@ -68,7 +69,7 @@ const priorityColors = {
   Baixa: 'info',
 } as const;
 
-export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
+export const KanbanView = ({ tasks, loading, onRefresh }: KanbanViewProps) => {
   const { updateTask, deleteTask } = useTasks(tasks[0]?.user_id || '');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
@@ -91,6 +92,16 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
   useEffect(() => {
     setLocalTasks(tasks);
   }, [tasks]);
+
+  // Sincronizar previewTask quando localTasks mudar
+  useEffect(() => {
+    if (previewTask) {
+      const updatedTask = localTasks.find(t => t.id === previewTask.id);
+      if (updatedTask) {
+        setPreviewTask(updatedTask);
+      }
+    }
+  }, [localTasks, previewTask]);
 
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -368,12 +379,52 @@ export const KanbanView = ({ tasks, loading }: KanbanViewProps) => {
       <KanbanBoard
         tasks={localTasks}
         onUpdateTask={async (taskId, updates) => {
-          await updateTask(taskId, updates);
+          // Atualização otimista - atualizar UI imediatamente
+          const taskToUpdate = localTasks.find(t => t.id === taskId);
+          
+          setLocalTasks(prevTasks =>
+            prevTasks.map(t =>
+              t.id === taskId
+                ? { ...t, ...updates, updated_at: new Date().toISOString() }
+                : t
+            )
+          );
+          
+          try {
+            await updateTask(taskId, updates);
+          } catch (error) {
+            // Reverter em caso de erro
+            console.error('Erro ao atualizar tarefa:', error);
+            if (taskToUpdate) {
+              setLocalTasks(prevTasks =>
+                prevTasks.map(t => (t.id === taskId ? taskToUpdate : t))
+              );
+            }
+          }
         }}
         onDeleteTask={async (taskId) => {
-          await deleteTask(taskId);
+          // Atualização otimista - remover tarefa da UI imediatamente
+          const taskToDelete = localTasks.find(t => t.id === taskId);
+          
+          setLocalTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+          
+          try {
+            await deleteTask(taskId);
+          } catch (error) {
+            // Reverter em caso de erro
+            console.error('Erro ao excluir tarefa:', error);
+            if (taskToDelete) {
+              setLocalTasks(prevTasks => [...prevTasks, taskToDelete]);
+            }
+          }
         }}
         onCreateTask={(status) => handleCreateTask(status as TaskStatus)}
+        onTaskEdited={() => {
+          // Recarrega as tarefas do servidor após editar
+          if (onRefresh) {
+            onRefresh();
+          }
+        }}
         showProgress={false} // SEM progresso no modo Kanban
         emptyMessage="Nenhuma tarefa encontrada. Que tal criar uma nova?"
       />

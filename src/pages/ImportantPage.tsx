@@ -56,6 +56,15 @@ export const ImportantPage = () => {
     useTasks(user?.id || '');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Função para atualizar tarefa
+  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+    try {
+      await updateTask(taskId, updates);
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+    }
+  };
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
@@ -612,6 +621,7 @@ export const ImportantPage = () => {
           task={previewTask}
           onClose={() => setPreviewTask(null)}
           onEdit={() => handleEditFromPreview(previewTask)}
+          onUpdateTask={handleUpdateTask}
         />
       )}
     </Box>
