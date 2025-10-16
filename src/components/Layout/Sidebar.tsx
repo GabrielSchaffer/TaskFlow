@@ -188,7 +188,7 @@ const SidebarContent = ({ onNewTask }: { onNewTask: () => void }) => {
       <Box sx={{ p: 1 }}>
         <Box
           component="img"
-          src="/logonova.webp"
+          src={colorTheme.id === 'dark-gold' ? "/logonovadouradasemfundos.png" : "/logonova.webp"}
           alt="TaskFlow"
           sx={{
             width: '80%',
