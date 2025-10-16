@@ -31,6 +31,7 @@ interface TaskPreviewProps {
   onClose: () => void;
   task: Task | null;
   onEdit: () => void;
+  onUpdateTask?: (id: string, updates: Partial<Task>) => Promise<void>;
 }
 
 const priorityColors = {
@@ -62,8 +63,17 @@ export const TaskPreview = ({
   onClose,
   task,
   onEdit,
+  onUpdateTask,
 }: TaskPreviewProps) => {
   if (!task) return null;
+
+  const handleToggleComplete = async () => {
+    console.log('🔄 handleToggleComplete chamado:', { onUpdateTask: !!onUpdateTask, task: task?.id, currentStatus: task?.status });
+    if (!onUpdateTask || !task) return;
+    const newStatus = task.status === 'completed' ? 'todo' : 'completed';
+    console.log('🔄 Alterando status de', task.status, 'para', newStatus);
+    await onUpdateTask(task.id, { status: newStatus });
+  };
 
   const formatDate = (dateString: string) => {
     return dayjs(dateString).format('DD/MM/YYYY [às] HH:mm');
@@ -149,8 +159,22 @@ export const TaskPreview = ({
             Título da Tarefa:
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-           
-            
+            {onUpdateTask && (
+              <IconButton
+                onClick={handleToggleComplete}
+                sx={{
+                  color: task.status === 'completed' ? '#4caf50' : '#666',
+                  '&:hover': {
+                    color: task.status === 'completed' ? '#388e3c' : '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                  },
+                  transition: 'all 0.2s ease',
+                  p: 0.5,
+                }}
+              >
+                {task.status === 'completed' ? <CheckCircle /> : <CheckCircle />}
+              </IconButton>
+            )}
             <Typography
               variant="h6"
               sx={{
@@ -162,6 +186,8 @@ export const TaskPreview = ({
                 whiteSpace: 'normal',
                 color: 'white',
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                opacity: task.status === 'completed' ? 0.7 : 1,
               }}
             >
               {task.title}
@@ -804,6 +830,41 @@ export const TaskPreview = ({
         >
           ✕ Fechar
         </Button>
+        {onUpdateTask && (
+          <Button
+            onClick={handleToggleComplete}
+            variant="contained"
+            startIcon={task.status === 'completed' ? <Pause /> : <CheckCircle />}
+            sx={{
+              background: task.status === 'completed' 
+                ? 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)'
+                : 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)',
+              color: 'white',
+              fontSize: { xs: '0.9rem', sm: '1.1rem' },
+              fontWeight: 700,
+              py: { xs: 1.5, sm: 1.5 },
+              px: { xs: 2, sm: 2 },
+              borderRadius: 2,
+              textTransform: 'none',
+              flex: 1,
+              boxShadow: task.status === 'completed' 
+                ? '0 4px 12px rgba(244, 67, 54, 0.3)'
+                : '0 4px 12px rgba(76, 175, 80, 0.3)',
+              '&:hover': {
+                background: task.status === 'completed'
+                  ? 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)'
+                  : 'linear-gradient(135deg, #388e3c 0%, #2e7d32 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: task.status === 'completed'
+                  ? '0 6px 16px rgba(244, 67, 54, 0.4)'
+                  : '0 6px 16px rgba(76, 175, 80, 0.4)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {task.status === 'completed' ? 'Desmarcar' : 'Concluir'}
+          </Button>
+        )}
         <Button
           onClick={onEdit}
           variant="contained"

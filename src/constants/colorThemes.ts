@@ -81,6 +81,15 @@ export const colorThemes: ColorTheme[] = [
     sidebarGradient: 'linear-gradient(135deg, #009688 0%, #4caf50 100%)',
     buttonGradient: 'linear-gradient(135deg, #009688 0%, #4caf50 100%)',
   },
+  {
+    id: 'dark-gold',
+    name: 'Escuro Dourado',
+    primary: '#FFC700',
+    secondary: '#E6B300',
+    gradient: 'linear-gradient(135deg, #FFC700 0%, #E6B300 100%)',
+    sidebarGradient: '#191919',
+    buttonGradient: '#FFC700',
+  },
 ];
 
 export const getColorTheme = (themeId: string): ColorTheme => {

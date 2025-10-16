@@ -17,6 +17,7 @@ import {
   Grid,
   FormControlLabel,
   Checkbox,
+  IconButton,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -25,8 +26,9 @@ import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/pt-br';
 import { useTasks } from '../../hooks/useTasks';
 import { useCategories } from '../../hooks/useCategories';
+import { useTheme } from '../../contexts/ThemeContext';
 import { TaskFormData, Priority } from '../../types';
-import { Add } from '@mui/icons-material';
+import { Add, Delete } from '@mui/icons-material';
 import { RichTextEditor } from './RichTextEditor';
 
 dayjs.locale('pt-br');
@@ -63,9 +65,12 @@ export const TaskForm = ({
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#2196f3');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { createTask, updateTask } = useTasks(userId);
-  const { categories, createCategory, fetchCategories } = useCategories(userId);
+  const { categories, createCategory, fetchCategories, deleteCategory } = useCategories(userId);
+  const { colorTheme } = useTheme();
 
   const predefinedColors = [
     '#f44336',
@@ -155,6 +160,39 @@ export const TaskForm = ({
     }
   };
 
+  const handleDeleteCategory = (categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    if (category) {
+      setCategoryToDelete({ id: categoryId, name: category.name });
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+
+    try {
+      const { error } = await deleteCategory(categoryToDelete.id);
+      if (error) throw error;
+
+      // Se a categoria deletada era a selecionada, limpar a seleção
+      if (formData.category === categoryToDelete.name) {
+        setFormData(prev => ({
+          ...prev,
+          category: '',
+        }));
+      }
+
+      // Forçar atualização da lista de categorias
+      await fetchCategories();
+
+      setShowDeleteConfirm(false);
+      setCategoryToDelete(null);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao excluir categoria');
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -215,8 +253,10 @@ export const TaskForm = ({
           pb: 1,
           fontSize: '1.5rem',
           fontWeight: 'bold',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
+          background: colorTheme.id === 'dark-gold' 
+            ? 'linear-gradient(135deg, #FFC700 0%, #E6B300 100%)'
+            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: colorTheme.id === 'dark-gold' ? '#000' : 'white',
           textAlign: 'center',
         }}
       >
@@ -388,24 +428,20 @@ export const TaskForm = ({
                   }}
                   label="Categoria"
                   sx={{ borderRadius: 2 }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflow: 'auto',
+                        scrollBehavior: 'smooth',
+                      },
+                    },
+                    disableScrollLock: true,
+                    disableAutoFocus: true,
+                    disableEnforceFocus: true,
+                    disableRestoreFocus: true,
+                  }}
                 >
-                  {categories.map(category => (
-                    <MenuItem key={category.id} value={category.name}>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                      >
-                        <Box
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            bgcolor: category.color,
-                            borderRadius: '50%',
-                          }}
-                        />
-                        {category.name}
-                      </Box>
-                    </MenuItem>
-                  ))}
                   <MenuItem onClick={() => setShowNewCategory(true)}>
                     <Box
                       sx={{
@@ -413,12 +449,54 @@ export const TaskForm = ({
                         alignItems: 'center',
                         gap: 1,
                         color: 'primary.main',
+                        fontWeight: 'bold',
                       }}
                     >
                       <Add fontSize="small" />
                       Nova Categoria
                     </Box>
                   </MenuItem>
+                  {categories.map(category => (
+                    <MenuItem key={category.id} value={category.name}>
+                      <Box
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          width: '100%',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              bgcolor: category.color,
+                              borderRadius: '50%',
+                            }}
+                          />
+                          {category.name}
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCategory(category.id);
+                          }}
+                          sx={{
+                            color: 'error.main',
+                            '&:hover': {
+                              backgroundColor: 'error.light',
+                              color: 'error.dark',
+                            },
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -537,9 +615,21 @@ export const TaskForm = ({
               borderRadius: 2,
               px: 3,
               py: 1,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: colorTheme.id === 'dark-gold' 
+                ? 'linear-gradient(135deg, #FFC700 0%, #E6B300 100%)'
+                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: colorTheme.id === 'dark-gold' ? '#000' : 'white',
               '&:hover': {
-                background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                background: colorTheme.id === 'dark-gold'
+                  ? 'linear-gradient(135deg, #E6B300 0%, #D4A017 100%)'
+                  : 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+              },
+              '&:disabled': {
+                background: '#666666',
+                color: '#999999',
+                '&:hover': {
+                  background: '#666666',
+                },
               },
             }}
           >
@@ -576,13 +666,13 @@ export const TaskForm = ({
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white',
             textAlign: 'center',
-            mt: 2,
+            mt: 3,
           }}
         >
           Nova Categoria
         </DialogTitle>
 
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3 , mt: 2}}>
           <TextField
             fullWidth
             label="Nome da Categoria"
@@ -656,6 +746,141 @@ export const TaskForm = ({
             }}
           >
             Criar Categoria
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%)',
+            border: '1px solid #333',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)',
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            textAlign: 'center',
+            color: '#fff',
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            py: 3,
+            borderBottom: '1px solid #333',
+            background: 'linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <Delete sx={{ color: '#f44336', fontSize: '2rem' }} />
+            Confirmar Exclusão
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ p: 4, textAlign: 'center' }}>
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#e0e0e0',
+              fontSize: '1.1rem',
+              lineHeight: 1.6,
+              mb: 2,
+            }}
+          >
+            Tem certeza que deseja excluir a categoria
+          </Typography>
+          
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
+              px: 3,
+              py: 1.5,
+              backgroundColor: '#333',
+              borderRadius: 2,
+              border: '1px solid #555',
+              mb: 3,
+            }}
+          >
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                bgcolor: categories.find(cat => cat.id === categoryToDelete?.id)?.color || '#2196f3',
+                borderRadius: '50%',
+              }}
+            />
+            <Typography
+              sx={{
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '1.1rem',
+              }}
+            >
+              {categoryToDelete?.name}
+            </Typography>
+          </Box>
+          
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#b0b0b0',
+              fontSize: '0.9rem',
+            }}
+          >
+            Esta ação não pode ser desfeita.
+          </Typography>
+        </DialogContent>
+        
+        <DialogActions
+          sx={{
+            p: 3,
+            gap: 2,
+            justifyContent: 'center',
+            borderTop: '1px solid #333',
+            background: 'linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%)',
+          }}
+        >
+          <Button
+            onClick={() => setShowDeleteConfirm(false)}
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              borderColor: '#555',
+              color: '#b0b0b0',
+              '&:hover': {
+                borderColor: '#777',
+                backgroundColor: '#333',
+                color: '#e0e0e0',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={confirmDeleteCategory}
+            variant="contained"
+            sx={{
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              background: 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+              },
+            }}
+          >
+            Excluir
           </Button>
         </DialogActions>
       </Dialog>

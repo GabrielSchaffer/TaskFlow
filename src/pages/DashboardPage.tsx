@@ -9,11 +9,13 @@ import {
 import { TrendingUp } from '@mui/icons-material';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../contexts/ThemeContext';
 import { Task } from '../types';
 
 export const DashboardPage = () => {
   const { user } = useAuth();
   const { tasks, loading } = useTasks(user?.id || '');
+  const { colorTheme } = useTheme();
 
   // Contar tarefas por etapa
   const completedTasks = tasks.filter(
@@ -57,8 +59,9 @@ export const DashboardPage = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background:
-          'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)',
+        background: colorTheme.id === 'dark-gold' 
+          ? '#191919' 
+          : '#191919',
         p: { xs: 2, sm: 3, md: 4 }, // Padding responsivo
         position: 'relative',
         width: '100%',
@@ -70,8 +73,9 @@ export const DashboardPage = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background:
-            'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%)',
+          background: colorTheme.id === 'dark-gold'
+          ? '#191919' 
+          : '#191919',
           pointerEvents: 'none',
         },
       }}
@@ -84,7 +88,9 @@ export const DashboardPage = () => {
             color: 'white',
             fontWeight: 800,
             mb: 2,
-            background: 'linear-gradient(45deg, #667eea, #764ba2)',
+            background: colorTheme.id === 'dark-gold' 
+              ? 'linear-gradient(45deg, #ffffff, #ffffff)'
+              : 'linear-gradient(45deg, #ffffff, #e0e0e0)',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -163,7 +169,9 @@ export const DashboardPage = () => {
             borderRadius: 4,
             p: 5,
             backdropFilter: 'blur(20px)',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+            boxShadow: colorTheme.id === 'dark-gold' 
+              ? 'none'
+              : '0 20px 40px rgba(0, 0, 0, 0.3)',
             position: 'relative',
             overflow: 'hidden',
             '&::before': {
@@ -173,7 +181,7 @@ export const DashboardPage = () => {
               left: 0,
               right: 0,
               height: '2px',
-              background: 'linear-gradient(90deg, #667eea, #764ba2, #f093fb)',
+              background: 'linear-gradient(90deg, #FFC700, #E6B300)',
             },
           }}
         >
@@ -182,9 +190,13 @@ export const DashboardPage = () => {
               sx={{
                 p: 1,
                 borderRadius: 4,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: colorTheme.id === 'dark-gold' 
+                  ? 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)'
+                  : 'linear-gradient(135deg, #FFC700 0%, #E6B300 100%)',
                 mr: 2,
-                boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 10px 30px rgba(102, 126, 234, 0.3)',
               }}
             >
               <TrendingUp sx={{ color: 'white', fontSize: '2.5rem' }} />
@@ -196,7 +208,9 @@ export const DashboardPage = () => {
                   color: 'white',
                   fontWeight: 700,
                   mb: 0,
-                  background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                  background: colorTheme.id === 'dark-gold' 
+                    ? 'linear-gradient(45deg, #fff, #fff)'
+                    : 'linear-gradient(45deg, #FFC700, #E6B300)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -239,7 +253,7 @@ export const DashboardPage = () => {
                 sx={{
                   color: 'white',
                   fontWeight: 700,
-                  background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                  background: 'linear-gradient(45deg, #FFC700, #E6B300)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -259,10 +273,13 @@ export const DashboardPage = () => {
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   mb: 1,
                   '& .MuiLinearProgress-bar': {
-                    background:
-                      'linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                    background: colorTheme.id === 'dark-gold'
+                      ? 'linear-gradient(90deg, #FFC700 0%, #E6B300 50%, #D4A017 100%)'
+                      : 'linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
                     borderRadius: 10,
-                    boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+                    boxShadow: colorTheme.id === 'dark-gold'
+                      ? 'none'
+                      : '0 4px 20px rgba(102, 126, 234, 0.4)',
                   },
                 }}
               />
@@ -273,14 +290,17 @@ export const DashboardPage = () => {
                 variant="h1"
                 sx={{
                   fontWeight: 900,
-                  background:
-                    'linear-gradient(45deg, #667eea, #764ba2, #f093fb)',
+                  background: colorTheme.id === 'dark-gold' 
+                    ? 'linear-gradient(45deg, #FFC700, #E6B300, #D4A017)'
+                    : 'linear-gradient(45deg, #667eea, #764ba2, #f093fb)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   mb: 0,
                   fontSize: { xs: '3rem', md: '4rem' },
-                  textShadow: '0 0 30px rgba(102, 126, 234, 0.3)',
+                  textShadow: colorTheme.id === 'dark-gold'
+                    ? 'none'
+                    : '0 0 30px rgba(102, 126, 234, 0.3)',
                 }}
               >
                 {completionPercentage}%
@@ -308,18 +328,25 @@ export const DashboardPage = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Box
             sx={{
-              background:
-                'linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)',
-              border: '1px solid rgba(244, 67, 54, 0.2)',
+              background: colorTheme.id === 'dark-gold'
+                ? 'linear-gradient(135deg, rgba(255, 199, 0, 0.1) 0%, rgba(255, 199, 0, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)',
+              border: colorTheme.id === 'dark-gold'
+                ? '1px solid rgba(255, 199, 0, 0.2)'
+                : '1px solid rgba(244, 67, 54, 0.2)',
               borderRadius: 4,
               p: 4,
               textAlign: 'center',
               backdropFilter: 'blur(20px)',
-              boxShadow: '0 15px 35px rgba(244, 67, 54, 0.2)',
+              boxShadow: colorTheme.id === 'dark-gold'
+                ? 'none'
+                : '0 15px 35px rgba(244, 67, 54, 0.2)',
               transition: 'all 0.3s ease',
               '&:hover': {
                 transform: 'translateY(-8px)',
-                boxShadow: '0 25px 50px rgba(244, 67, 54, 0.3)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 25px 50px rgba(244, 67, 54, 0.3)',
               },
             }}
           >
@@ -327,10 +354,14 @@ export const DashboardPage = () => {
               sx={{
                 p: 3,
                 borderRadius: 4,
-                background: 'linear-gradient(135deg, #f44336 0%, #e57373 100%)',
+                background: colorTheme.id === 'dark-gold' 
+                  ? 'linear-gradient(135deg, #FFC700 0%, #E6B300 100%)'
+                  : 'linear-gradient(135deg, #f44336 0%, #e57373 100%)',
                 mb: 3,
                 display: 'inline-block',
-                boxShadow: '0 10px 30px rgba(244, 67, 54, 0.4)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 10px 30px rgba(244, 67, 54, 0.4)',
               }}
             >
               <Typography
@@ -370,18 +401,25 @@ export const DashboardPage = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Box
             sx={{
-              background:
-                'linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%)',
-              border: '1px solid rgba(255, 152, 0, 0.2)',
+              background: colorTheme.id === 'dark-gold'
+                ? 'linear-gradient(135deg, rgba(230, 179, 0, 0.1) 0%, rgba(230, 179, 0, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%)',
+              border: colorTheme.id === 'dark-gold'
+                ? '1px solid rgba(230, 179, 0, 0.2)'
+                : '1px solid rgba(255, 152, 0, 0.2)',
               borderRadius: 4,
               p: 4,
               textAlign: 'center',
               backdropFilter: 'blur(20px)',
-              boxShadow: '0 15px 35px rgba(255, 152, 0, 0.2)',
+              boxShadow: colorTheme.id === 'dark-gold'
+                ? 'none'
+                : '0 15px 35px rgba(255, 152, 0, 0.2)',
               transition: 'all 0.3s ease',
               '&:hover': {
                 transform: 'translateY(-8px)',
-                boxShadow: '0 25px 50px rgba(255, 152, 0, 0.3)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 25px 50px rgba(255, 152, 0, 0.3)',
               },
             }}
           >
@@ -389,10 +427,14 @@ export const DashboardPage = () => {
               sx={{
                 p: 3,
                 borderRadius: 4,
-                background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
+                background: colorTheme.id === 'dark-gold' 
+                  ? 'linear-gradient(135deg, #E6B300 0%, #D4A017 100%)'
+                  : 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
                 mb: 3,
                 display: 'inline-block',
-                boxShadow: '0 10px 30px rgba(255, 152, 0, 0.4)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 10px 30px rgba(255, 152, 0, 0.4)',
               }}
             >
               <Typography
@@ -432,18 +474,25 @@ export const DashboardPage = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Box
             sx={{
-              background:
-                'linear-gradient(135deg, rgba(255, 87, 34, 0.1) 0%, rgba(255, 87, 34, 0.05) 100%)',
-              border: '1px solid rgba(255, 87, 34, 0.2)',
+              background: colorTheme.id === 'dark-gold'
+                ? 'linear-gradient(135deg, rgba(212, 160, 23, 0.1) 0%, rgba(212, 160, 23, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 87, 34, 0.1) 0%, rgba(255, 87, 34, 0.05) 100%)',
+              border: colorTheme.id === 'dark-gold'
+                ? '1px solid rgba(212, 160, 23, 0.2)'
+                : '1px solid rgba(255, 87, 34, 0.2)',
               borderRadius: 4,
               p: 4,
               textAlign: 'center',
               backdropFilter: 'blur(20px)',
-              boxShadow: '0 15px 35px rgba(255, 87, 34, 0.2)',
+              boxShadow: colorTheme.id === 'dark-gold'
+                ? 'none'
+                : '0 15px 35px rgba(255, 87, 34, 0.2)',
               transition: 'all 0.3s ease',
               '&:hover': {
                 transform: 'translateY(-8px)',
-                boxShadow: '0 25px 50px rgba(255, 87, 34, 0.3)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 25px 50px rgba(255, 87, 34, 0.3)',
               },
             }}
           >
@@ -451,10 +500,14 @@ export const DashboardPage = () => {
               sx={{
                 p: 3,
                 borderRadius: 4,
-                background: 'linear-gradient(135deg, #ff5722 0%, #ff8a65 100%)',
+                background: colorTheme.id === 'dark-gold' 
+                  ? 'linear-gradient(135deg, #D4A017 0%, #B8860B 100%)'
+                  : 'linear-gradient(135deg, #ff5722 0%, #ff8a65 100%)',
                 mb: 3,
                 display: 'inline-block',
-                boxShadow: '0 10px 30px rgba(255, 87, 34, 0.4)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 10px 30px rgba(255, 87, 34, 0.4)',
               }}
             >
               <Typography
@@ -494,18 +547,25 @@ export const DashboardPage = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Box
             sx={{
-              background:
-                'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%)',
-              border: '1px solid rgba(33, 150, 243, 0.2)',
+              background: colorTheme.id === 'dark-gold'
+                ? 'linear-gradient(135deg, rgba(255, 199, 0, 0.1) 0%, rgba(255, 199, 0, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%)',
+              border: colorTheme.id === 'dark-gold'
+                ? '1px solid rgba(255, 199, 0, 0.2)'
+                : '1px solid rgba(33, 150, 243, 0.2)',
               borderRadius: 4,
               p: 4,
               textAlign: 'center',
               backdropFilter: 'blur(20px)',
-              boxShadow: '0 15px 35px rgba(33, 150, 243, 0.2)',
+              boxShadow: colorTheme.id === 'dark-gold'
+                ? 'none'
+                : '0 15px 35px rgba(33, 150, 243, 0.2)',
               transition: 'all 0.3s ease',
               '&:hover': {
                 transform: 'translateY(-8px)',
-                boxShadow: '0 25px 50px rgba(33, 150, 243, 0.3)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 25px 50px rgba(33, 150, 243, 0.3)',
               },
             }}
           >
@@ -513,10 +573,14 @@ export const DashboardPage = () => {
               sx={{
                 p: 3,
                 borderRadius: 4,
-                background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
+                background: colorTheme.id === 'dark-gold' 
+                  ? 'linear-gradient(135deg, #FFC700 0%, #E6B300 100%)'
+                  : 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
                 mb: 3,
                 display: 'inline-block',
-                boxShadow: '0 10px 30px rgba(33, 150, 243, 0.4)',
+                boxShadow: colorTheme.id === 'dark-gold'
+                  ? 'none'
+                  : '0 10px 30px rgba(33, 150, 243, 0.4)',
               }}
             >
               <Typography

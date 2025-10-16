@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
 import { ViewKanban, CalendarMonth, ViewList, Add } from '@mui/icons-material';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../contexts/ThemeContext';
 import { KanbanView } from '../components/Views/KanbanView';
 import { CalendarView } from '../components/Views/CalendarView';
 import { ListView } from '../components/Views/ListView';
@@ -18,6 +19,7 @@ type ViewMode = 'kanban' | 'calendar' | 'list';
 
 export const TasksPage = () => {
   const { user } = useAuth();
+  const { colorTheme } = useTheme();
   const { tasks, loading, createTask, updateTask, deleteTask, forceRefresh } = useTasks(user?.id || '');
 
   // Função para obter o modo de visualização do localStorage ou usar o padrão
@@ -35,6 +37,13 @@ export const TasksPage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
   const [showTaskForm, setShowTaskForm] = useState(false);
 
+  // Atualizar dados quando o modo de visualização muda
+  useEffect(() => {
+    console.log('🔄 Modo de visualização mudou para:', viewMode);
+    // Forçar atualização dos dados
+    forceRefresh();
+  }, [viewMode]);
+
   // Função para forçar atualização quando tarefa é criada
   const handleTaskCreated = () => {
     console.log('✅ Nova tarefa criada - atualizando lista');
@@ -51,6 +60,9 @@ export const TasksPage = () => {
       setViewMode(newViewMode);
       // Persistir o modo de visualização no localStorage
       localStorage.setItem('taskflow-view-mode', newViewMode);
+      // Forçar atualização dos dados quando o modo muda
+      console.log('🔄 Modo de visualização alterado para:', newViewMode);
+      forceRefresh();
     }
   };
 
@@ -172,12 +184,10 @@ export const TasksPage = () => {
                   letterSpacing: '0.5px',
                   transition: 'all 0.2s ease-in-out',
                   '&.Mui-selected': {
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                    backgroundColor: colorTheme.id === 'dark-gold' ? '#FFC700' : '#1976d2',
+                    color: colorTheme.id === 'dark-gold' ? '#000' : 'white',
                     '&:hover': {
-                      backgroundColor: '#1565c0',
-                      boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
+                      backgroundColor: colorTheme.id === 'dark-gold' ? '#E6B300' : '#1565c0',
                     },
                   },
                   '&:hover': {

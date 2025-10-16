@@ -258,31 +258,6 @@ export const SettingsPage = () => {
                   flex: 1,
                 }}
               >
-                <FormControl fullWidth>
-                  <InputLabel sx={{ color: '#e0e0e0' }}>Tema</InputLabel>
-                  <Select
-                    value={settings?.theme || 'dark'}
-                    onChange={(e: any) =>
-                      updateTheme(e.target.value as 'light' | 'dark')
-                    }
-                    label="Tema"
-                    sx={{
-                      color: 'white',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#555',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#777',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                      },
-                    }}
-                  >
-                    <MenuItem value="light">Claro</MenuItem>
-                    <MenuItem value="dark">Escuro</MenuItem>
-                  </Select>
-                </FormControl>
 
                 <FormControl fullWidth>
                   <InputLabel sx={{ color: '#e0e0e0' }}>

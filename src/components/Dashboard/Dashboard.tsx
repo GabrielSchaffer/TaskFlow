@@ -83,7 +83,11 @@ export const Dashboard = () => {
   ).length;
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ 
+      flexGrow: 1,
+      backgroundColor: 'background.default',
+      minHeight: '100vh'
+    }}>
       <AppBar position="static" elevation={1}>
         <Toolbar>
           {/* <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>

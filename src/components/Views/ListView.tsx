@@ -67,6 +67,20 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Função para atualizar tarefa com atualização otimista
+  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+    try {
+      await updateTask(taskId, updates);
+      // Atualizar previewTask se estiver aberto
+      if (previewTask && previewTask.id === taskId) {
+        const updatedTask = { ...previewTask, ...updates };
+        setPreviewTask(updatedTask);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+    }
+  };
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [filteredStage, setFilteredStage] = useState<string | null>(null);
 
@@ -171,7 +185,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
         justifyContent="center"
         alignItems="center"
         minHeight="400px"
-        sx={{ backgroundColor: '#121212' }}
+        sx={{ backgroundColor: 'background.default' }}
       >
         <Typography variant="h6" sx={{ color: '#b0b0b0' }}>
           Carregando tarefas...
@@ -182,7 +196,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
 
   return (
     <Box sx={{ 
-      backgroundColor: '#121212', 
+      backgroundColor: 'background.default',
       minHeight: '100vh', 
       p: { xs: 1, sm: 2, md: 3 }, // Padding responsivo
       width: '100%',
@@ -797,6 +811,7 @@ export const ListView = ({ tasks, loading }: ListViewProps) => {
           onClose={() => setPreviewTask(null)}
           task={previewTask}
           onEdit={handleEditFromPreview}
+          onUpdateTask={handleUpdateTask}
         />
       )}
 

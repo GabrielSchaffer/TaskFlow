@@ -93,6 +93,16 @@ export const KanbanView = ({ tasks, loading, onRefresh }: KanbanViewProps) => {
     setLocalTasks(tasks);
   }, [tasks]);
 
+  // Sincronizar previewTask quando localTasks mudar
+  useEffect(() => {
+    if (previewTask) {
+      const updatedTask = localTasks.find(t => t.id === previewTask.id);
+      if (updatedTask) {
+        setPreviewTask(updatedTask);
+      }
+    }
+  }, [localTasks, previewTask]);
+
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
