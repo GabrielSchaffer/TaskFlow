@@ -276,6 +276,7 @@ export const TaskForm = ({
             <Grid item xs={12}>
               <TextField
                 fullWidth
+                size="small"
                 label="Título da Tarefa"
                 value={formData.title}
                 onChange={handleChange('title')}
@@ -319,6 +320,7 @@ export const TaskForm = ({
                   slotProps={{
                     textField: {
                       fullWidth: true,
+                      size: 'small',
                       variant: 'outlined',
                       sx: {
                         '& .MuiOutlinedInput-root': {
@@ -343,6 +345,7 @@ export const TaskForm = ({
                   slotProps={{
                     textField: {
                       fullWidth: true,
+                      size: 'small',
                       variant: 'outlined',
                       required: true,
                       sx: {
@@ -358,7 +361,7 @@ export const TaskForm = ({
 
             {/* Prioridade e Categoria */}
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" size="small">
                 <InputLabel>Prioridade</InputLabel>
                 <Select
                   value={formData.priority}
@@ -412,7 +415,7 @@ export const TaskForm = ({
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth variant="outlined" required>
+              <FormControl fullWidth variant="outlined" size="small" required>
                 <InputLabel>Categoria</InputLabel>
                 <Select
                   value={formData.category}
@@ -533,7 +536,7 @@ export const TaskForm = ({
 
             {/* Status da Tarefa */}
             <Grid item xs={12} sx={{}}>
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
                   value={formData.status}
