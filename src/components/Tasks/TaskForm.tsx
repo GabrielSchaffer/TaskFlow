@@ -290,7 +290,7 @@ export const TaskForm = ({
               />
             </Grid>
 
-            {/* Descrição */}
+            {/* Descrição */} 
             <Grid item xs={12} sx={{ height: '' }}>
               <RichTextEditor
                 value={formData.description}
