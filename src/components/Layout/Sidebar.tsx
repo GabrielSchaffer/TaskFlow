@@ -41,6 +41,7 @@ import {
   Schedule,
   PriorityHigh,
 } from '@mui/icons-material';
+import { Refresh } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
@@ -133,7 +134,7 @@ const SidebarContent = ({ onNewTask }: { onNewTask: () => void }) => {
   const { user, signOut } = useAuth();
   const { profile } = useProfile(user?.id || '');
   const { colorTheme } = useTheme();
-  const { tasks } = useTasks(user?.id || '');
+  const { tasks, forceRefresh } = useTasks(user?.id || '');
   const [showNewsModal, setShowNewsModal] = useState(false);
 
   // Número de novidades (pode ser controlado por localStorage ou API)
@@ -192,7 +193,7 @@ const SidebarContent = ({ onNewTask }: { onNewTask: () => void }) => {
           alt="TaskFlow"
           sx={{
             width: '80%',
-            height: '80%',
+            height: '85%',
             margin: '0 auto',
             display: 'block',
             borderRadius: 2,
@@ -302,6 +303,7 @@ const SidebarContent = ({ onNewTask }: { onNewTask: () => void }) => {
                     ? '1 Tarefa Vencida'
                     : `${overdueCount} Tarefas Vencidas`}
                 </Typography>
+               
                 <Typography
                   variant="caption"
                   sx={{
@@ -309,22 +311,36 @@ const SidebarContent = ({ onNewTask }: { onNewTask: () => void }) => {
                     fontSize: '0.7rem',
                   }}
                 >
-                  Revisar pendências
-                </Typography>
+                  Revisar pendências 
+                  
+               </Typography> 
               </Box>
-              <Chip
-                label={overdueCount}
+              <Button
                 size="small"
+                variant="contained"
+                onClick={() => {
+                  console.log('🔄 Atualizando contador de tarefas vencidas...');
+                  forceRefresh();
+                }}
                 sx={{
                   background:
                     'linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%)',
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: '0.7rem',
+                  fontSize: '0.4rem',
                   height: '22px',
+                  minWidth: '22px',
+                  padding: '0 8px',
                   boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #ff5252 0%, #ff3333 100%)',
+                    transform: 'scale(1.05)',
+                  },
+                  transition: 'all 0.2s ease',
                 }}
-              />
+              >
+                <Refresh sx={{ fontSize: '1.2rem' }} />
+              </Button>
             </Box>
 
             <Button

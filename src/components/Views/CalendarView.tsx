@@ -384,7 +384,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
           sx={{
             minWidth: { xs: '32px', sm: '40px' }, // Menor em mobile
             height: { xs: '32px', sm: '36px' }, // Altura responsiva
-            color: '#191919',
+            color: '#ffffff',
             borderColor: '#555',
             '&:hover': {
               borderColor: '#777',
@@ -445,7 +445,7 @@ export const CalendarView = ({ tasks, loading }: CalendarViewProps) => {
           sx={{
             minWidth: { xs: '32px', sm: '40px' }, // Menor em mobile
             height: { xs: '32px', sm: '36px' }, // Altura responsiva
-            color: '#191919',
+            color: '#ffffff',
             borderColor: '#555',
             '&:hover': {
               borderColor: '#777',

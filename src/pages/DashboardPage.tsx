@@ -329,8 +329,8 @@ export const DashboardPage = () => {
           <Box
             sx={{
               background: colorTheme.id === 'dark-gold'
-                ? 'linear-gradient(135deg, rgba(255, 199, 0, 0.1) 0%, rgba(255, 199, 0, 0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)',
+                ? '#191919'
+                : '#191919',
               border: colorTheme.id === 'dark-gold'
                 ? '1px solid rgba(255, 199, 0, 0.2)'
                 : '1px solid rgba(244, 67, 54, 0.2)',
@@ -402,8 +402,8 @@ export const DashboardPage = () => {
           <Box
             sx={{
               background: colorTheme.id === 'dark-gold'
-                ? 'linear-gradient(135deg, rgba(230, 179, 0, 0.1) 0%, rgba(230, 179, 0, 0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%)',
+                ? '#191919'
+                : '#191919',
               border: colorTheme.id === 'dark-gold'
                 ? '1px solid rgba(230, 179, 0, 0.2)'
                 : '1px solid rgba(255, 152, 0, 0.2)',
@@ -475,8 +475,8 @@ export const DashboardPage = () => {
           <Box
             sx={{
               background: colorTheme.id === 'dark-gold'
-                ? 'linear-gradient(135deg, rgba(212, 160, 23, 0.1) 0%, rgba(212, 160, 23, 0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(255, 87, 34, 0.1) 0%, rgba(255, 87, 34, 0.05) 100%)',
+                ? '#191919'
+                : '#191919',
               border: colorTheme.id === 'dark-gold'
                 ? '1px solid rgba(212, 160, 23, 0.2)'
                 : '1px solid rgba(255, 87, 34, 0.2)',
@@ -548,7 +548,7 @@ export const DashboardPage = () => {
           <Box
             sx={{
               background: colorTheme.id === 'dark-gold'
-                ? 'linear-gradient(135deg, rgba(255, 199, 0, 0.1) 0%, rgba(255, 199, 0, 0.05) 100%)'
+                ? '#191919'
                 : 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%)',
               border: colorTheme.id === 'dark-gold'
                 ? '1px solid rgba(255, 199, 0, 0.2)'

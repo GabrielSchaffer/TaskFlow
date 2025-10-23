@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, IconButton, AppBar, Toolbar, Typography } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
+import { Box, IconButton, AppBar, Toolbar, Typography, Fab } from '@mui/material';
+import { Menu as MenuIcon, Add } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Sidebar } from './Sidebar';
@@ -94,6 +94,36 @@ export const Layout = ({ children }: LayoutProps) => {
           {children}
         </Box>
       </Box>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="add"
+        onClick={handleNewTask}
+        size="medium"
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 16, sm: 24 },
+          right: { xs: 16, sm: 24 },
+          width: { xs: 48, sm: 56 },
+          height: { xs: 48, sm: 56 },
+          background: colorTheme.buttonGradient,
+          color: colorTheme.id === 'dark-gold' ? '#000' : 'white',
+          '&:hover': {
+            background: colorTheme.buttonGradient,
+            filter: 'brightness(0.9)',
+            transform: 'scale(1.05)',
+          },
+          boxShadow: `0 8px 16px ${colorTheme.primary}40`,
+          transition: 'all 0.3s ease',
+          zIndex: 1000,
+          '& .MuiSvgIcon-root': {
+            fontSize: { xs: '1.2rem', sm: '1.5rem' },
+          },
+        }}
+      >
+        <Add />
+      </Fab>
 
       {/* Task Form Modal */}
       <TaskForm
